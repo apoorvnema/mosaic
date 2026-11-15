@@ -14,6 +14,9 @@ const files = {};
 })(dist);
 
 if (!files['manifest.json']) throw new Error('dist/manifest.json missing — run `pnpm build` first');
-const out = join(import.meta.dirname, '..', 'mosaic-extension.zip');
+const { version } = JSON.parse(
+  files['manifest.json'] && new TextDecoder().decode(files['manifest.json']),
+);
+const out = join(import.meta.dirname, '..', `mosaic-extension-${version}.zip`);
 writeFileSync(out, zipSync(files, { level: 9 }));
 console.log(`${out} (${Object.keys(files).length} files)`);

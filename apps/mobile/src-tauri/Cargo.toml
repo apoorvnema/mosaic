@@ -2,7 +2,7 @@
 # WebView and registers plugins. Do not add application logic here (see CLAUDE.md).
 [package]
 name = "mosaic-mobile"
-version = "0.0.0"
+version = "0.1.0"
 description = "Mosaic mobile shell"
 edition = "2021"
 
