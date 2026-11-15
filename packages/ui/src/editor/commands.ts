@@ -101,12 +101,15 @@ export function moveBlock(direction: -1 | 1): Command {
   };
 }
 
-/** Arrow down at the very end of a note that ends in code (or an image): add a line to type on. */
+/** Arrow down on the last line of a note that ends in code (or an image): add a line to type on. */
 export const leaveLastBlock: Command = (state, dispatch) => {
   const { $to, empty } = state.selection;
   const last = state.doc.lastChild;
-  if (!empty || !last || $to.pos < state.doc.content.size - 1) return false;
-  if (!(last.type.spec.code || last.isAtom)) return false;
+  if (!empty || !last || !(last.type.spec.code || last.isAtom)) return false;
+  if ($to.depth > 0 && $to.node(1) !== last) return false;
+  if ($to.depth === 0 && $to.pos < state.doc.content.size - last.nodeSize) return false;
+  // Still lines below the caret inside the block: let the arrow key move normally.
+  if (last.isTextblock && last.textContent.slice($to.parentOffset).includes('\n')) return false;
   if (dispatch) {
     const tr = state.tr.insert(state.doc.content.size, nodes.paragraph.create());
     dispatch(

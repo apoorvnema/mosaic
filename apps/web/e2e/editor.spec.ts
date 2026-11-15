@@ -85,7 +85,8 @@ test('the slash menu inserts blocks, by keyboard alone', async ({ page }) => {
   await expectFile('Editor/Slash.md', 'intro\n\n```\nlet x = 1;\nx++;\n```\n');
 
   // Arrow keys choose; Escape dismisses and leaves the text alone.
-  await page.keyboard.press('Control+End');
+  // Arrow down from anywhere on the last line of a trailing code block leaves it.
+  await page.keyboard.press('Home');
   await page.keyboard.press('ArrowDown');
   await page.keyboard.type('/');
   await page.keyboard.press('ArrowDown');
