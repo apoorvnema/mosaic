@@ -1,8 +1,16 @@
 name: Build Android
 
-# Scaffolded in the bootstrap session and not yet proven green. The Android
-# project is generated here by `tauri android init` until it is committed in the
-# Android session (docs/adr/0007).
+# A signed release APK for phones (arm64 and 32-bit arm). The Android project is
+# generated here by `tauri android init` until it is committed in the Android
+# session (docs/adr/0007).
+#
+# Signing: Android only installs signed APKs, and only updates an app when the new
+# APK is signed with the same key. Add these repository secrets for a permanent key:
+#   ANDROID_KEYSTORE_BASE64    base64 of a .jks keystore
+#   ANDROID_KEYSTORE_PASSWORD  its password (also used as the key password)
+#   ANDROID_KEY_ALIAS          the key alias (defaults to "mosaic")
+# Without them the build signs with a throwaway key: it installs, but every build
+# then needs the previous one uninstalled first.
 on:
   push:
     branches: [main]
@@ -37,22 +45,43 @@ jobs:
       - run: echo "NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> "$GITHUB_ENV"
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+          targets: aarch64-linux-android,armv7-linux-androideabi
       - run: pnpm --filter @mosaic/mobile tauri android init
-      - run: pnpm --filter @mosaic/mobile tauri android build --apk --debug
-      - name: Name the APK after the version
+      - run: pnpm --filter @mosaic/mobile tauri android build --apk --target aarch64 armv7
+      - name: Sign the APK
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
           version="$(node -p "require('./package.json').version")"
-          apk="$(find apps/mobile/src-tauri/gen/android/app/build/outputs/apk -name '*.apk' | head -n 1)"
-          cp "$apk" "Mosaic_${version}_android-debug.apk"
+          tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)"
+          unsigned="$(find apps/mobile/src-tauri/gen/android/app/build/outputs/apk -name '*.apk' | head -n 1)"
+          keystore="$RUNNER_TEMP/mosaic.jks"
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$keystore"
+            alias="${KEY_ALIAS:-mosaic}"
+          else
+            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret: signing with a throwaway key. Uninstall the previous build before installing this one."
+            KEYSTORE_PASSWORD="throwaway-key"
+            alias="mosaic"
+            keytool -genkeypair -keystore "$keystore" -alias "$alias" -keyalg RSA -keysize 2048 \
+              -validity 10000 -storepass "$KEYSTORE_PASSWORD" -keypass "$KEYSTORE_PASSWORD" -dname "CN=Mosaic"
+          fi
+          "$tools/zipalign" -f -p 4 "$unsigned" "$RUNNER_TEMP/aligned.apk"
+          "$tools/apksigner" sign --ks "$keystore" --ks-key-alias "$alias" \
+            --ks-pass "pass:$KEYSTORE_PASSWORD" --key-pass "pass:$KEYSTORE_PASSWORD" \
+            --out "Mosaic_${version}_android.apk" "$RUNNER_TEMP/aligned.apk"
+          "$tools/apksigner" verify --print-certs "Mosaic_${version}_android.apk" | head -n 3
+          ls -lh "Mosaic_${version}_android.apk"
       - name: Publish to the GitHub release
         if: github.ref == 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: .github/scripts/publish-release.sh Mosaic_*_android-debug.apk
+        run: .github/scripts/publish-release.sh Mosaic_*_android.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: mosaic-android-debug
+          name: mosaic-android
           retention-days: 7
-          path: Mosaic_*_android-debug.apk
+          path: Mosaic_*_android.apk
