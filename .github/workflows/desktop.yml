@@ -21,7 +21,9 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      # --ignore-scripts: skip compiling better-sqlite3. It is only used by tests and
+      # the dev server, never by the desktop app, and it fails to compile on Windows.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
