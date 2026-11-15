@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Mosaic",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Capture notes into Mosaic from any tab.",
   "icons": { "16": "icon-16.png", "48": "icon-48.png", "128": "icon-128.png" },
   "action": { "default_popup": "popup.html", "default_title": "Mosaic" },

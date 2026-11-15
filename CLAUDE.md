@@ -54,7 +54,23 @@ There is no build step between packages; Vite, vitest and tsc consume the source
 | `pnpm test:core`    | core only, zero browser                                                                                                                                            |
 | `pnpm test:pending` | specs for unbuilt modules — **expected to fail**                                                                                                                   |
 | `pnpm test:e2e`     | Playwright against the web app, headless, on a fresh temp vault                                                                                                    |
+| `pnpm version:set`  | set the product version everywhere, e.g. `pnpm version:set 0.2.0`                                                                                                  |
 | `pnpm build`        | build every app                                                                                                                                                    |
+
+## Versions and releases
+
+- **One version for the whole product**, set in the root `package.json`. Never edit
+  a version by hand anywhere else: run `pnpm version:set 0.2.0`, which updates every
+  package, the extension manifest and both Tauri crates. `pnpm lint` fails if any drift.
+- Tauri reads its version from the app's `package.json` (`"version": "../package.json"`).
+  Android rejects `0.0.0`, so the version must stay at `0.0.1` or above.
+- Every build on `main` (desktop, Android, web, extension) attaches its output to the
+  GitHub release tagged `v<version>` via `.github/scripts/publish-release.sh`. The
+  release is created on first use; rebuilding the same version replaces its files.
+  **To cut a new release, bump the version** and merge to `main`.
+- Builds are clean every time: no Rust build cache, and Linux runners free disk space
+  first. Build workflows install with `--ignore-scripts` because `better-sqlite3`
+  (test-only) cannot compile on the Windows runner.
 
 ## This environment cannot see the app
 

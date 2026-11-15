@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,7 +21,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @mosaic/extension build
       - run: pnpm --filter @mosaic/extension zip
+      - name: Publish to the GitHub release
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/publish-release.sh apps/extension/mosaic-extension-*.zip
       - uses: actions/upload-artifact@v4
         with:
           name: mosaic-extension
-          path: apps/extension/mosaic-extension.zip
+          retention-days: 7
+          path: apps/extension/mosaic-extension-*.zip

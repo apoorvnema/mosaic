@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,7 +20,18 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @mosaic/web build
+      - name: Zip the bundle
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          (cd apps/web/dist && zip -qr "$GITHUB_WORKSPACE/mosaic-web-${version}.zip" .)
+      - name: Publish to the GitHub release
+        if: github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/scripts/publish-release.sh mosaic-web-*.zip
       - uses: actions/upload-artifact@v4
         with:
           name: mosaic-web
+          retention-days: 7
           path: apps/web/dist
