@@ -12,7 +12,7 @@ The phases from [plan.html](plan.html) section 19, mapped to the build sessions 
 - [x] Core module interfaces and behaviour specs (pending)
 - [x] CI: lint, typecheck, test, headless Playwright
 - [x] Design system foundations: tokens, twelve note colours, light and dark, app shell
-- [ ] CI builds proven green: desktop (Linux, Windows), Android APK — macOS runner deferred to phase 5 (10x minutes)
+- [ ] CI builds proven green: desktop (Linux, Windows, macOS), Android APK
 - [ ] File format specification: markdown extensions, frontmatter rules, block ids
 - [ ] Spike: markdown round-trip fidelity on a real corpus
 - [ ] Spike: Yjs on a 50,000-word document and a 10,000-object board
