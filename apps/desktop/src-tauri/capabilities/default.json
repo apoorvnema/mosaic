@@ -18,6 +18,22 @@
     "fs:allow-exists",
     "fs:allow-watch",
     "fs:allow-unwatch",
-    { "identifier": "fs:scope", "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/**" }] }
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        {
+          "path": "$APPDATA"
+        },
+        {
+          "path": "$APPDATA/**"
+        },
+        {
+          "path": "$APPDATA/**/.*"
+        },
+        {
+          "path": "$APPDATA/**/.*/**"
+        }
+      ]
+    }
   ]
 }
