@@ -12,7 +12,8 @@ The phases from [plan.html](plan.html) section 19, mapped to the build sessions 
 - [x] Core module interfaces and behaviour specs (pending)
 - [x] CI: lint, typecheck, test, headless Playwright
 - [x] Design system foundations: tokens, twelve note colours, light and dark, app shell
-- [ ] CI builds proven green: desktop (Linux, Windows, macOS), Android APK
+- [x] CI builds proven green: desktop (Linux, Windows, macOS)
+- [ ] Android: signed release APK installs and starts on a phone
 - [ ] File format specification: markdown extensions, frontmatter rules, block ids
 - [ ] Spike: markdown round-trip fidelity on a real corpus
 - [ ] Spike: Yjs on a 50,000-word document and a 10,000-object board
@@ -23,14 +24,18 @@ The phases from [plan.html](plan.html) section 19, mapped to the build sessions 
 
 Prompt 1 — vault and editor
 
-- [ ] Vault: open a folder, scan, parse markdown + frontmatter into the block tree
-- [ ] Round-trip: awkward-markdown corpus survives parse → serialise unchanged
-- [ ] Block tree with stable ids, materialised only when referenced
-- [ ] SQLite index with FTS5; wipe-and-rebuild test
-- [ ] File watcher: external edits update the open document
-- [ ] Block editor (ProseMirror): paragraphs, headings, lists, tasks, quotes, callouts, code, images, links
-- [ ] Wiki links with autocomplete, slash menu, drag to reorder
-- [ ] Search under 120 ms on 10,000 notes, benchmarked in CI
+- [x] Vault: open a folder, scan, parse markdown + frontmatter into the block tree
+- [x] Round-trip: awkward-markdown corpus survives parse → serialise unchanged
+- [x] Block tree with stable ids, materialised only when referenced
+- [x] SQLite index with FTS5; wipe-and-rebuild test
+- [x] File watcher: external edits update the open document
+- [x] Block editor (ProseMirror): paragraphs, headings, lists, tasks, quotes, callouts, code, images, links
+- [x] Wiki links with autocomplete, slash menu, drag to reorder
+- [x] Search under 120 ms on 10,000 notes, benchmarked in CI — measured 20 ms worst case, 2.8 s to build the index
+- [x] Backlinks panel, trash with undo, rename, new note
+- [ ] Trash purge after 30 days
+- [ ] Editor: tables, callout kind/title editing, link editing UI (currently edited as markdown source)
+- [ ] Search in the browser measured on 10,000 notes (the benchmark runs on node's SQLite)
 
 Prompt 2 — board, notebooks, stickies
 

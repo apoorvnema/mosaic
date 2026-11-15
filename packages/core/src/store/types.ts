@@ -24,7 +24,35 @@ export type TextBlockType =
   'paragraph' | 'heading' | 'list-item' | 'task' | 'quote' | 'callout' | 'code' | 'table-row';
 export type EmbedBlockType = 'image' | 'file' | 'audio' | 'bookmark' | 'block-ref' | 'query';
 export type DiagramBlockType = 'mermaid' | 'drawing';
-export type BlockType = TextBlockType | EmbedBlockType | DiagramBlockType;
+/** `divider` is a thematic break (`---`). Not in the plan's table; markdown has it. */
+export type BlockType = TextBlockType | EmbedBlockType | DiagramBlockType | 'divider';
+
+/**
+ * What the parser remembers about a block's original text, so that a block nobody
+ * edited is written back byte for byte. Opaque to everything except filebridge.
+ */
+export interface BlockSource {
+  /** The block's own lines, exactly as they were in the file. */
+  raw: string;
+  /** Blank lines that followed it. */
+  trailing: string;
+  /** Fingerprint of the block's fields at parse time; a mismatch means "edited". */
+  snapshot: string;
+  /** Leading whitespace of a list item, and the marker it used (`-`, `*`, `1.`…). */
+  indent: string;
+  marker?: string;
+  /** Set when the block no longer follows the block it followed in the file (it was moved). */
+  detached?: boolean;
+}
+
+export interface NoteSource {
+  /** The frontmatter block including its `---` fences, or '' when there is none. */
+  frontmatter: string;
+  metaSnapshot: string;
+  /** Blank lines before the first block. */
+  leading: string;
+  eol: '\n' | '\r\n';
+}
 
 export interface Block {
   /** Present only when materialised (something links to this block). */
@@ -35,6 +63,7 @@ export interface Block {
   /** Type-specific properties: heading level, task checked, code language, list ordering… */
   props: Record<string, string | number | boolean>;
   children: Block[];
+  source?: BlockSource;
 }
 
 /**
@@ -57,6 +86,7 @@ export interface Note {
   path: VaultPath;
   meta: NoteMeta;
   blocks: Block[];
+  source?: NoteSource;
 }
 
 export type StoreChange =

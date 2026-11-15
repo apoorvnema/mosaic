@@ -14,3 +14,4 @@ export * from './schema/index';
 export * as vaultCrypto from './crypto/index';
 export * from './sync/index';
 export * from './plugins/index';
+export * from './vault/index';

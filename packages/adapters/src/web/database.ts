@@ -58,25 +58,37 @@ export async function createWebDatabase(name = 'mosaic-index.sqlite'): Promise<D
       (await all(sql, params)) as T[],
   };
 
+  // While a transaction is open, calls from anywhere (its own callback, or the UI
+  // reading at the same moment) queue on a second chain so the connection is never
+  // re-entered. They run inside the transaction, which is harmless for reads.
+  let txTail: Promise<unknown> = Promise.resolve();
+  const queue = <T>(fn: () => Promise<T>): Promise<T> => {
+    if (!inTransaction) return serial(fn);
+    const next = txTail.then(fn, fn);
+    txTail = next.catch(() => undefined);
+    return next;
+  };
+
   return {
-    exec: (sql) => (inTransaction ? direct.exec(sql) : serial(() => direct.exec(sql))),
-    run: (sql, params) =>
-      inTransaction ? direct.run(sql, params) : serial(() => direct.run(sql, params)),
+    exec: (sql) => queue(() => direct.exec(sql)),
+    run: (sql, params) => queue(() => direct.run(sql, params)),
     query: <T extends SqlRow = SqlRow>(sql: string, params?: readonly SqlValue[]) =>
-      inTransaction ? direct.query<T>(sql, params) : serial(() => direct.query<T>(sql, params)),
+      queue(() => direct.query<T>(sql, params)),
     transaction: <T>(fn: () => Promise<T>) =>
       serial(async () => {
-        inTransaction = true;
         await direct.exec('begin immediate');
+        inTransaction = true;
         try {
           const value = await fn();
+          await txTail;
+          inTransaction = false;
           await direct.exec('commit');
           return value;
         } catch (error) {
+          await txTail;
+          inTransaction = false;
           await direct.exec('rollback');
           throw error;
-        } finally {
-          inTransaction = false;
         }
       }),
     close: () => serial(async () => void (await sqlite3.close(db))),
