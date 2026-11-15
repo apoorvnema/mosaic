@@ -1,0 +1,178 @@
+/*
+ * Mosaic design tokens. Every colour, radius, shadow and type size in the product
+ * comes from here; components never hard-code a value. Themes (and later, user
+ * themes) are just a different set of values for the same names.
+ *
+ * Dark mode: follows the system unless <html data-theme="light|dark"> pins it.
+ */
+:root {
+  color-scheme: light;
+
+  /* Type */
+  --font-sans:
+    'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+
+  /* Space: a 4px scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 999px;
+
+  /* Surfaces */
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-sunken: #f1f1f3;
+  --hover: rgba(15, 15, 20, 0.05);
+  --active: rgba(15, 15, 20, 0.08);
+
+  /* Ink */
+  --text: #17171a;
+  --text-secondary: #5c5c66;
+  --text-tertiary: #8b8b96;
+  --border: #e6e6ea;
+  --border-strong: #d3d3da;
+
+  /* Accent */
+  --accent: #5b5bd6;
+  --accent-hover: #4a4ac4;
+  --accent-soft: #ededfc;
+  --on-accent: #ffffff;
+  --focus-ring: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+
+  /* Status */
+  --ok: #18794e;
+  --ok-soft: #e4f5ec;
+  --warn: #ad5700;
+  --warn-soft: #fff1dc;
+  --danger: #c62a2f;
+  --danger-soft: #fdeaea;
+
+  /* Elevation: only for things that float (pinned, dragging, menus) — never decoration */
+  --shadow-sm: 0 1px 2px rgba(15, 15, 20, 0.06);
+  --shadow-md: 0 4px 16px -4px rgba(15, 15, 20, 0.12), 0 1px 3px rgba(15, 15, 20, 0.06);
+  --shadow-lg: 0 16px 40px -12px rgba(15, 15, 20, 0.22), 0 2px 6px rgba(15, 15, 20, 0.06);
+
+  /* Motion */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --fast: 120ms;
+  --slow: 240ms;
+
+  /* The twelve note colours. Stable across devices; their meaning is the user's. */
+  --note-yellow: #fdf0b3;
+  --note-orange: #fddcb5;
+  --note-red: #fbcfcb;
+  --note-pink: #fad1e6;
+  --note-purple: #e6d6f8;
+  --note-indigo: #d9dcfb;
+  --note-blue: #cfe5fb;
+  --note-teal: #c6ece8;
+  --note-green: #d0edcf;
+  --note-lime: #e4f1bd;
+  --note-brown: #eadfd3;
+  --note-gray: #e8e8ec;
+  --note-ink: #1d1d22;
+}
+
+/* Dark mode desaturates the note colours rather than inverting them, so a yellow
+   note is still recognisably that note. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0e0e10;
+  --surface: #161618;
+  --surface-raised: #1c1c1f;
+  --surface-sunken: #0a0a0c;
+  --hover: rgba(255, 255, 255, 0.06);
+  --active: rgba(255, 255, 255, 0.1);
+  --text: #ededf0;
+  --text-secondary: #a3a3ad;
+  --text-tertiary: #71717b;
+  --border: #26262b;
+  --border-strong: #37373e;
+  --accent: #8e8ef0;
+  --accent-hover: #a3a3f5;
+  --accent-soft: #23234a;
+  --on-accent: #0e0e10;
+  --ok: #4cc38a;
+  --ok-soft: #12291e;
+  --warn: #f1a10d;
+  --warn-soft: #2e2005;
+  --danger: #ff6369;
+  --danger-soft: #311517;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 40px -12px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --note-yellow: #4d4420;
+  --note-orange: #4f3a22;
+  --note-red: #50292a;
+  --note-pink: #4d2a3f;
+  --note-purple: #3d2e55;
+  --note-indigo: #2d3158;
+  --note-blue: #1f3a55;
+  --note-teal: #1a4441;
+  --note-green: #24452a;
+  --note-lime: #3a4520;
+  --note-brown: #43382e;
+  --note-gray: #2f2f36;
+  --note-ink: #f1f1f4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #0e0e10;
+    --surface: #161618;
+    --surface-raised: #1c1c1f;
+    --surface-sunken: #0a0a0c;
+    --hover: rgba(255, 255, 255, 0.06);
+    --active: rgba(255, 255, 255, 0.1);
+    --text: #ededf0;
+    --text-secondary: #a3a3ad;
+    --text-tertiary: #71717b;
+    --border: #26262b;
+    --border-strong: #37373e;
+    --accent: #8e8ef0;
+    --accent-hover: #a3a3f5;
+    --accent-soft: #23234a;
+    --on-accent: #0e0e10;
+    --ok: #4cc38a;
+    --ok-soft: #12291e;
+    --warn: #f1a10d;
+    --warn-soft: #2e2005;
+    --danger: #ff6369;
+    --danger-soft: #311517;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 16px 40px -12px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
+    --note-yellow: #4d4420;
+    --note-orange: #4f3a22;
+    --note-red: #50292a;
+    --note-pink: #4d2a3f;
+    --note-purple: #3d2e55;
+    --note-indigo: #2d3158;
+    --note-blue: #1f3a55;
+    --note-teal: #1a4441;
+    --note-green: #24452a;
+    --note-lime: #3a4520;
+    --note-brown: #43382e;
+    --note-gray: #2f2f36;
+    --note-ink: #f1f1f4;
+  }
+}

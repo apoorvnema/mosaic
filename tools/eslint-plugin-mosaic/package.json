@@ -1,0 +1,15 @@
+{
+  "name": "eslint-plugin-mosaic",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "exports": "./index.js",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "eslint": "^10.15.0",
+    "vitest": "^5.1.0"
+  }
+}

@@ -1,0 +1,20 @@
+# Tauri scaffolding. The application is TypeScript; this crate only starts the
+# WebView and registers plugins. Do not add application logic here (see CLAUDE.md).
+[package]
+name = "mosaic-desktop"
+version = "0.0.0"
+description = "Mosaic desktop shell"
+edition = "2021"
+
+[lib]
+name = "mosaic_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-fs = { version = "2", features = ["watch"] }
+tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tauri-plugin-dialog = "2"

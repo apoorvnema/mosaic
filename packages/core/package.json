@@ -1,0 +1,26 @@
+{
+  "name": "@mosaic/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/index.ts",
+    "./contracts": "./test/contracts/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "test:pending": "vitest run --config vitest.pending.config.ts"
+  },
+  "dependencies": {
+    "yjs": "^13.6.33"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.0.0",
+    "better-sqlite3": "^13.2.0",
+    "typescript": "~6.0.0",
+    "vitest": "^5.1.0"
+  }
+}

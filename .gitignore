@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.turbo/
+*.tsbuildinfo
+coverage/
+test-results/
+playwright-report/
+.DS_Store
+# Tauri / Rust build output
+target/
+apps/*/src-tauri/gen/
+# local dev vault state (the notes themselves are committed as a sample)
+dev-vault/.mosaic/
+*.zip

@@ -1,0 +1,8 @@
+pnpm-lock.yaml
+docs/plan.html
+docs/prompts.md
+dist
+target
+gen
+dev-vault
+**/icons/**

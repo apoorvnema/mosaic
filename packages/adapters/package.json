@@ -1,0 +1,36 @@
+{
+  "name": "@mosaic/adapters",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./node": "./src/node/index.ts",
+    "./web": "./src/web/index.ts",
+    "./tauri": "./src/tauri/index.ts",
+    "./extension": "./src/extension/index.ts",
+    "./devserver": "./src/devserver/index.ts",
+    "./shared": "./src/shared/index.ts",
+    "./devserver/server": "./src/devserver/server.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@journeyapps/wa-sqlite": "^2.0.10",
+    "@mosaic/core": "workspace:*",
+    "@tauri-apps/api": "^2.12.4",
+    "@tauri-apps/plugin-fs": "^2.7.1",
+    "@tauri-apps/plugin-sql": "^2.6.0",
+    "better-sqlite3": "^13.2.0",
+    "chokidar": "^4.0.3",
+    "libsodium-wrappers-sumo": "^0.8.4"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/chrome": "^0.3.7",
+    "@types/node": "^22.0.0",
+    "typescript": "~6.0.0",
+    "vitest": "^5.1.0"
+  }
+}

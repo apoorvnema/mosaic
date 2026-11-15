@@ -1,0 +1,40 @@
+name: Build Android
+
+# Scaffolded in the bootstrap session and not yet proven green. The Android
+# project is generated here by `tauri android init` until it is committed in the
+# Android session (docs/adr/0007).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "ndk;26.3.11579264"
+      - run: echo "NDK_HOME=$ANDROID_HOME/ndk/26.3.11579264" >> "$GITHUB_ENV"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/mobile/src-tauri
+      - run: pnpm --filter @mosaic/mobile tauri android init
+      - run: pnpm --filter @mosaic/mobile tauri android build --apk --debug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mosaic-android-debug
+          path: apps/mobile/src-tauri/gen/android/app/build/outputs/apk/**/*.apk

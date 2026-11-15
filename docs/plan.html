@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mosaic — architecture, project plan and timeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#15202a;
+  --ink-soft:#3d4e5c;
+  --ink-faint:#6b7d8a;
+  --rule:#c3d0d8;
+  --rule-soft:#dde5ea;
+  --paper:#ffffff;
+  --field:#dfe7ec;
+  --marigold:#e9a73c;
+  --marigold-deep:#a86c07;
+  --teal:#1f6f68;
+  --clay:#a8503f;
+  --iris:#54488c;
+  --shell:76rem;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background-color:var(--field);
+  background-image:
+    linear-gradient(to right, rgba(21,32,42,.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(21,32,42,.045) 1px, transparent 1px);
+  background-size:26px 26px;
+  color:var(--ink);
+  font-family:Newsreader,"Iowan Old Style",Palatino,Georgia,serif;
+  font-size:17px;
+  line-height:1.62;
+}
+h1,h2,h3,h4,.f-alt{font-family:Archivo,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.012em}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;font-size:.86em}
+a{color:var(--teal)}
+
+.wrap{max-width:var(--shell);margin:0 auto;padding:0 20px}
+
+/* ---------- masthead + hero pinboard ---------- */
+.masthead{padding:44px 0 8px}
+.eyebrow{font-family:Archivo;font-weight:500;font-size:.82rem;color:var(--ink-faint);margin:0 0 14px}
+h1{font-size:clamp(2.1rem,6vw,3.6rem);line-height:1.02;margin:0 0 18px;max-width:16ch;font-weight:700}
+.standfirst{max-width:60ch;font-size:1.12rem;color:var(--ink-soft);margin:0 0 34px}
+
+.board{
+  position:relative;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:18px;
+  padding:26px 18px 30px;
+  background:
+    repeating-linear-gradient(45deg,rgba(21,32,42,.028) 0 6px,transparent 6px 12px),
+    #cbb59a;
+  border:1px solid #a9906f;
+  border-radius:3px;
+  box-shadow:inset 0 0 0 6px rgba(255,255,255,.14);
+}
+.note{
+  position:relative;
+  padding:20px 15px 16px;
+  min-height:132px;
+  font-family:Archivo;
+  font-size:.9rem;
+  line-height:1.42;
+  color:#25313b;
+  box-shadow:2px 4px 7px rgba(21,32,42,.22);
+  transform:rotate(var(--r,0deg));
+}
+.note b{display:block;font-weight:700;font-size:1rem;margin-bottom:5px}
+.note:nth-child(1){--r:-1.6deg;background:#f6d97e}
+.note:nth-child(2){--r:1.1deg;background:#b9e0cf}
+.note:nth-child(3){--r:-.7deg;background:#bfd9ef}
+.note:nth-child(4){--r:1.7deg;background:#f0bfbe}
+.note:nth-child(5){--r:-1.2deg;background:#d6c9ea}
+.note:nth-child(6){--r:.8deg;background:#f2ede2}
+.pin{
+  position:absolute;top:7px;left:50%;width:11px;height:11px;margin-left:-5px;border-radius:50%;
+  background:radial-gradient(circle at 34% 30%,#fff 0 12%,#c0392b 14% 70%,#7d2318 100%);
+  box-shadow:0 1px 2px rgba(0,0,0,.35);
+}
+@media (prefers-reduced-motion:no-preference){
+  .note{animation:settle .5s cubic-bezier(.2,.9,.3,1) backwards}
+  .note:nth-child(1){animation-delay:.02s}.note:nth-child(2){animation-delay:.09s}
+  .note:nth-child(3){animation-delay:.16s}.note:nth-child(4){animation-delay:.23s}
+  .note:nth-child(5){animation-delay:.3s}.note:nth-child(6){animation-delay:.37s}
+  @keyframes settle{from{opacity:0;transform:translateY(-10px) rotate(0deg) scale(.97)}
+    to{opacity:1;transform:translateY(0) rotate(var(--r,0deg)) scale(1)}}
+}
+
+/* ---------- layout ---------- */
+.cols{display:grid;grid-template-columns:1fr;gap:34px;padding:38px 0 60px}
+@media (min-width:960px){
+  .cols{grid-template-columns:200px minmax(0,1fr);gap:52px}
+  nav.toc{position:sticky;top:24px;align-self:start;max-height:calc(100vh - 48px);overflow:auto}
+}
+nav.toc ol{list-style:none;margin:0;padding:0;font-family:Archivo;font-size:.85rem}
+@media (max-width:959px){
+  nav.toc{background:var(--paper);border:1px solid var(--rule);padding:12px 12px 8px}
+  nav.toc ol{column-count:2;column-gap:12px}
+  nav.toc li{break-inside:avoid}
+}
+nav.toc li{margin:0 0 2px}
+nav.toc a{display:block;padding:5px 9px;color:var(--ink-soft);text-decoration:none;border-left:2px solid var(--rule-soft)}
+nav.toc a:hover,nav.toc a:focus{color:var(--ink);border-left-color:var(--marigold);background:rgba(255,255,255,.6)}
+
+section{margin:0 0 52px;scroll-margin-top:20px}
+section > h2{
+  font-size:1.55rem;margin:0 0 6px;padding-bottom:8px;border-bottom:2px solid var(--ink);
+}
+.sec-note{color:var(--ink-faint);font-size:.95rem;margin:0 0 22px;max-width:66ch}
+h3{font-size:1.1rem;margin:30px 0 8px}
+h4{font-size:.98rem;margin:20px 0 6px;color:var(--ink-soft)}
+p{max-width:68ch;margin:0 0 14px}
+ul,ol{max-width:68ch;padding-left:1.1rem;margin:0 0 14px}
+li{margin:0 0 6px}
+
+.sheet{background:var(--paper);border:1px solid var(--rule);padding:20px 22px;margin:0 0 18px}
+.sheet > :last-child{margin-bottom:0}
+.sheet > h3:first-child,.sheet > h4:first-child{margin-top:0}
+
+.grid2{display:grid;gap:16px;grid-template-columns:1fr}
+@media (min-width:720px){.grid2{grid-template-columns:1fr 1fr}}
+.grid3{display:grid;gap:16px;grid-template-columns:1fr}
+@media (min-width:720px){.grid3{grid-template-columns:repeat(3,1fr)}}
+
+table{width:100%;border-collapse:collapse;font-family:Archivo;font-size:.86rem;background:var(--paper)}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--rule-soft);vertical-align:top}
+thead th{border-bottom:1.5px solid var(--ink);font-weight:600;font-size:.8rem;color:var(--ink)}
+tbody tr:last-child td{border-bottom:1px solid var(--rule)}
+.scroller{overflow-x:auto;border:1px solid var(--rule);margin:0 0 18px;-webkit-overflow-scrolling:touch}
+.scroller table{min-width:640px;border:0}
+.hint{font-size:.82rem;color:var(--ink-faint);font-family:Archivo;margin:-10px 0 18px}
+
+.tag{display:inline-block;font-family:Archivo;font-size:.72rem;font-weight:600;padding:2px 7px;border:1px solid currentColor;border-radius:2px;white-space:nowrap}
+.t-yes{color:var(--teal)}.t-later{color:var(--marigold-deep)}.t-no{color:var(--clay)}
+
+.pick{border-left:3px solid var(--teal);background:var(--paper);padding:14px 18px;margin:0 0 18px}
+.pick .f-alt{color:var(--teal);font-size:.8rem;display:block;margin-bottom:4px}
+.warn{border-left:3px solid var(--clay);background:#fbf3f1;padding:14px 18px;margin:0 0 18px}
+.warn .f-alt{color:var(--clay);font-size:.8rem;display:block;margin-bottom:4px}
+
+/* ---------- gantt ---------- */
+.gantt{display:grid;grid-template-columns:150px repeat(18,minmax(40px,1fr));min-width:900px;font-family:Archivo;background:var(--paper)}
+.g-m{grid-row:1;text-align:center;padding:7px 0 6px;font-size:.68rem;color:var(--ink-faint);border-bottom:1.5px solid var(--ink);border-left:1px solid var(--rule-soft)}
+.g-m.yr{color:var(--ink);font-weight:600;border-left:1px solid var(--ink)}
+.g-corner{grid-row:1;grid-column:1;border-bottom:1.5px solid var(--ink)}
+.g-lab{grid-column:1;padding:9px 10px;font-size:.76rem;font-weight:600;border-bottom:1px solid var(--rule-soft);border-right:1px solid var(--rule);display:flex;align-items:center}
+.g-cell{border-bottom:1px solid var(--rule-soft);border-left:1px solid var(--rule-soft);min-height:34px}
+.g-bar{align-self:center;z-index:1;margin:0 2px;padding:3px 7px;font-size:.68rem;font-weight:600;color:#fff;border-radius:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-bar.on-light{color:#2b2011}
+.g-ms{grid-row:1;align-self:end;z-index:2;font-size:.62rem;color:var(--ink)}
+.g-milerow{grid-column:1;padding:9px 10px;font-size:.76rem;font-weight:600;border-right:1px solid var(--rule)}
+.g-dot{z-index:2;align-self:center;justify-self:start;display:flex;align-items:center;gap:5px;font-size:.66rem;font-weight:600;white-space:nowrap}
+.g-dot::before{content:"";width:9px;height:9px;background:var(--ink);transform:rotate(45deg);flex:none}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-family:Archivo;font-size:.74rem;margin:12px 0 20px;color:var(--ink-soft)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:13px;height:13px;border-radius:2px;display:inline-block}
+
+/* ---------- phase cards ---------- */
+.phase{background:var(--paper);border:1px solid var(--rule);border-top:4px solid var(--ink);padding:18px 20px;margin:0 0 16px}
+.phase h3{margin:0 0 2px;font-size:1.06rem}
+.phase .when{font-family:Archivo;font-size:.78rem;color:var(--ink-faint);margin:0 0 12px}
+.phase h4{margin:14px 0 5px;font-size:.82rem;color:var(--ink)}
+.phase ul{margin:0;font-size:.94rem}
+.phase .exit{border-top:1px solid var(--rule-soft);margin-top:14px;padding-top:12px;font-size:.9rem}
+.p0{border-top-color:#6b7d8a}.p1{border-top-color:var(--teal)}.p2{border-top-color:var(--marigold)}
+.p3{border-top-color:var(--iris)}.p4{border-top-color:var(--clay)}.p5{border-top-color:#2c6ea8}
+
+/* ---------- feature list ---------- */
+.feats{margin:0 0 6px}
+@media (min-width:760px){.feats{columns:2;column-gap:30px}}
+.featgrp{break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid;background:var(--paper);border:1px solid var(--rule);padding:14px 16px 12px;margin:0 0 16px}
+.featgrp h4{margin:0 0 8px;font-size:.86rem;color:var(--ink);border-bottom:1px solid var(--rule-soft);padding-bottom:6px}
+ul.fl{list-style:none;margin:0;padding:0;font-family:Archivo;font-size:.82rem;line-height:1.35}
+ul.fl li{margin:0 0 6px;padding-left:15px;position:relative;color:var(--ink-soft)}
+ul.fl li::before{content:"";position:absolute;left:0;top:.46em;width:6px;height:6px;background:var(--marigold);border-radius:1px}
+.pf{font-size:.64rem;font-weight:600;color:var(--ink-faint);margin-left:4px;white-space:nowrap;letter-spacing:.03em}
+
+figure{margin:0 0 20px}
+figcaption{font-family:Archivo;font-size:.8rem;color:var(--ink-faint);margin-top:8px}
+svg{display:block;max-width:100%;height:auto}
+</style>
+</head>
+<body>
+
+<header class="wrap masthead">
+  <p class="eyebrow">Product architecture and delivery plan · working name Mosaic · v0.1 draft</p>
+  <h1>One notebook that stops making you choose.</h1>
+  <p class="standfirst">Quick capture that never gets in the way, plain files you own, structure when you want it, and an infinite canvas you can draw on with a pen. Six platforms, one core. This document is the architecture, the plan, and the schedule to build it.</p>
+
+  <div class="board">
+    <div class="note"><span class="pin"></span><b>Keep</b>Capture in under two seconds. Widget, tile, share sheet, hotkey. Colored cards on a board.</div>
+    <div class="note"><span class="pin"></span><b>OneNote</b>Freeform pages. Type or write anywhere. Notebook → section → page, and sticky notes that live on the desktop.</div>
+    <div class="note"><span class="pin"></span><b>Notion</b>Typed properties, schemas that hold, database views: table, board, calendar, gallery.</div>
+    <div class="note"><span class="pin"></span><b>Obsidian</b>Markdown files on disk. Backlinks, graph, and a real plugin API. Your folder works without us.</div>
+    <div class="note"><span class="pin"></span><b>Excalidraw &amp; Mermaid</b>Diagrams as content, not screenshots. Editable, versioned, exportable.</div>
+    <div class="note"><span class="pin"></span><b>Miro &amp; Affine</b>Infinite canvas with pressure-sensitive ink, built for a tablet and a stylus.</div>
+  </div>
+</header>
+
+<div class="wrap cols">
+<nav class="toc" aria-label="Contents">
+  <ol>
+    <li><a href="#thesis">1 · Thesis and scope</a></li>
+    <li><a href="#pillars">2 · What each app contributes</a></li>
+    <li><a href="#features">3 · Feature list</a></li>
+    <li><a href="#overview">4 · System overview</a></li>
+    <li><a href="#stack">5 · Stack decision</a></li>
+    <li><a href="#norust">6 · Building without Rust</a></li>
+    <li><a href="#data">7 · Data model</a></li>
+    <li><a href="#sync">8 · Sync engine</a></li>
+    <li><a href="#auth">9 · Accounts and auth</a></li>
+    <li><a href="#vault">10 · Vault and encryption</a></li>
+    <li><a href="#capture">11 · Capture and sticky notes</a></li>
+    <li><a href="#mobile">12 · Mobile design</a></li>
+    <li><a href="#workflows">13 · Journal &amp; trackers</a></li>
+    <li><a href="#canvas">14 · Canvas, ink, diagrams</a></li>
+    <li><a href="#plugins">15 · Plugins and themes</a></li>
+    <li><a href="#backend">16 · Backend and infrastructure</a></li>
+    <li><a href="#platforms">17 · Platform matrix</a></li>
+    <li><a href="#migration">18 · Migrating data in</a></li>
+    <li><a href="#plan">19 · Project plan</a></li>
+    <li><a href="#timeline">20 · Timeline</a></li>
+    <li><a href="#team">21 · Team and cost</a></li>
+    <li><a href="#risks">22 · Risks</a></li>
+    <li><a href="#cut">23 · Cut from v1</a></li>
+    <li><a href="#quality">24 · Quality bar</a></li>
+  </ol>
+</nav>
+
+<main>
+<section id="thesis">
+<h2>1 · Thesis and scope</h2>
+<p class="sec-note">Five apps, five habits. The reason people run all of them is that each one is uncompromising about a single thing, and each one is bad at the others.</p>
+
+<p>The failure mode of "one app to replace them all" is a product that is mediocre at six jobs. Mosaic avoids that by picking one substrate that can genuinely express all of them: <strong>a block tree stored as plain files, merged by a CRDT, indexed by a local database.</strong> A quick note, a typed database row, a markdown document, a whiteboard shape and a sticky note on your desktop are all the same object, rendered by a different view.</p>
+
+<p>That single decision is what makes the rest of this plan possible. It is also the main technical risk, so it is validated in the first eight weeks before anything is built on top of it.</p>
+
+<div class="grid3">
+  <div class="sheet"><h4>Non-negotiable one</h4><p>Capture is instant and offline. Hotkey to typed text in under 400&nbsp;ms, cold, with no account required.</p></div>
+  <div class="sheet"><h4>Non-negotiable two</h4><p>Your notes are files. Delete the app, keep the folder. Markdown, images, JSON canvases — readable in any editor.</p></div>
+  <div class="sheet"><h4>Non-negotiable three</h4><p>Structure is optional and additive. Typed fields never block you from writing a messy note.</p></div>
+</div>
+
+<h3>In scope for 1.0</h3>
+<ul>
+  <li>Desktop: Linux, Windows, macOS. Mobile: Android, iOS. Web: PWA. <span class="tag t-later">macOS and iOS in the last phase</span></li>
+  <li>Accounts, multi-device sync, an encrypted vault, sharing by link.</li>
+  <li>Markdown notes, typed collections and views, infinite canvas with ink, Mermaid, Excalidraw-compatible drawings, sticky notes pinned in-app and on the OS.</li>
+  <li>A plugin runtime, a theme system, and importers from Keep, Notion, Obsidian, OneNote and Evernote.</li>
+</ul>
+</section>
+
+<section id="pillars">
+<h2>2 · What each app contributes</h2>
+<p class="sec-note">Every pillar is written as the thing we must not get wrong, and the mechanism that delivers it. If a mechanism can't be built, the pillar is cut whole rather than shipped weak.</p>
+<div class="scroller">
+<table>
+<thead><tr><th>Source habit</th><th>What must survive</th><th>Mechanism in Mosaic</th><th>Phase</th></tr></thead>
+<tbody>
+<tr><td>Google Keep</td><td>Zero-friction capture, colored cards, checklists, reminders, pins</td><td>Global hotkey overlay, Android widget and quick-settings tile, share targets, masonry board view over the same block store</td><td>1–2</td></tr>
+<tr><td>OneNote</td><td>Freeform page: put anything anywhere. Notebook → section → page. Desktop sticky notes</td><td>Page-bounded canvas with the same shape engine as the infinite canvas; folder hierarchy maps to notebook structure; always-on-top note windows</td><td>3</td></tr>
+<tr><td>Notion</td><td>Typed properties that stay valid, relations, and multiple views over one dataset</td><td>Collection schemas over YAML frontmatter, validated on write, materialized in SQLite; table, board, calendar and gallery views as saved queries</td><td>3</td></tr>
+<tr><td>Obsidian</td><td>Plain markdown on disk, backlinks, graph, local-first, plugins</td><td>Files are the source of truth; bidirectional file watcher; link index; sandboxed plugin runtime with a capability model</td><td>1, 4</td></tr>
+<tr><td>Excalidraw / Mermaid</td><td>Diagrams that stay editable and portable</td><td>Native shape layer that reads and writes <code>.excalidraw</code> JSON; Mermaid blocks rendered client-side and stored as text</td><td>3</td></tr>
+<tr><td>Miro / Affine</td><td>Infinite canvas, comfortable with a stylus on a tablet</td><td>Tiled GPU renderer, pointer-level pen input with pressure and tilt, palm rejection, shape recognition</td><td>3</td></tr>
+<tr><td>Google / OneNote sync</td><td>It is just there on the next device, and it never loses an edit</td><td>Per-document CRDT with an append-only update log, live over WebSocket, plus optional LAN peer sync</td><td>2</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="features">
+<h2>3 · Every feature, one line each</h2>
+<p class="sec-note">The whole product as a checklist. The marker after each line is the phase it ships in, matching the plan in section 19. Anything not on this list is not in 1.0 — see section 23.</p>
+
+<div class="feats">
+
+<div class="featgrp"><h4>Capture</h4><ul class="fl">
+<li>Capture works offline and without an account <span class="pf">P1</span></li>
+<li>Global hotkey capture window on desktop <span class="pf">P2</span></li>
+<li>Home-screen capture bar widget <span class="pf">P2</span></li>
+<li>Quick-settings tile for a new note <span class="pf">P2</span></li>
+<li>Lock-screen capture into a staging area <span class="pf">P2</span></li>
+<li>Share target from any app <span class="pf">P2</span></li>
+<li>Ongoing notification with inline reply <span class="pf">P2</span></li>
+<li>Photo straight into a new note <span class="pf">P2</span></li>
+<li>Clipboard capture with the source link <span class="pf">P3</span></li>
+<li>Voice memo with transcript <span class="pf">P4</span></li>
+<li>Floating bubble over other apps <span class="pf">P4</span></li>
+<li>Menu bar capture on macOS <span class="pf">P5</span></li>
+<li>Share extension and Control Centre on iOS <span class="pf">P5</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Writing</h4><ul class="fl">
+<li>Block editor with live markdown formatting <span class="pf">P1</span></li>
+<li>Headings, lists, quotes, callouts, code blocks <span class="pf">P1</span></li>
+<li>Checklists with nested items <span class="pf">P1</span></li>
+<li>Slash menu to insert any block <span class="pf">P1</span></li>
+<li>Drag to reorder any block <span class="pf">P1</span></li>
+<li>Inline images, files and audio <span class="pf">P1</span></li>
+<li>Wiki links with autocomplete <span class="pf">P1</span></li>
+<li>Backlinks panel on every note <span class="pf">P1</span></li>
+<li>Markdown files round-trip without loss <span class="pf">P1</span></li>
+<li>Tables with keyboard navigation <span class="pf">P3</span></li>
+<li>Block references and live transclusion <span class="pf">P3</span></li>
+<li>Footnotes, maths and syntax highlighting <span class="pf">P3</span></li>
+<li>Web bookmarks as preview cards <span class="pf">P3</span></li>
+<li>Outline, word count and reading time <span class="pf">P3</span></li>
+<li>Version history per note and per block <span class="pf">P2</span></li>
+<li>Focus and typewriter modes <span class="pf">P4</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Organisation</h4><ul class="fl">
+<li>Folders as notebooks and sections <span class="pf">P1</span></li>
+<li>Labels and nested tags <span class="pf">P1</span></li>
+<li>Pin, archive and trash with 30-day recovery <span class="pf">P1</span></li>
+<li>Daily notes and journal <span class="pf">P2</span></li>
+<li>Section colour inherited by its pages <span class="pf">P3</span></li>
+<li>Collection schemas with typed fields <span class="pf">P3</span></li>
+<li>Text, number, date, select, checkbox, url fields <span class="pf">P3</span></li>
+<li>Relations between notes <span class="pf">P3</span></li>
+<li>Rollups and a basic formula set <span class="pf">P3</span></li>
+<li>Schema validation as you type <span class="pf">P3</span></li>
+<li>Repair queue for values broken outside the app <span class="pf">P3</span></li>
+<li>Templates for notes and collections <span class="pf">P3</span></li>
+<li>Saved filters and sort orders <span class="pf">P3</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Views</h4><ul class="fl">
+<li>Masonry board of colour cards <span class="pf">P1</span></li>
+<li>List view with two-line previews <span class="pf">P1</span></li>
+<li>Multiple windows on desktop <span class="pf">P2</span></li>
+<li>Table view with inline editing <span class="pf">P3</span></li>
+<li>Kanban board grouped by any field <span class="pf">P3</span></li>
+<li>Calendar view on any date field <span class="pf">P3</span></li>
+<li>Gallery view with image covers <span class="pf">P3</span></li>
+<li>Two- and three-pane tablet layouts <span class="pf">P3</span></li>
+<li>Graph view of links <span class="pf">P4</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Canvas, ink and diagrams</h4><ul class="fl">
+<li>Infinite canvas with pan and zoom <span class="pf">P3</span></li>
+<li>Shapes, arrows and connectors that stay attached <span class="pf">P3</span></li>
+<li>Frames and grouping <span class="pf">P3</span></li>
+<li>Note cards on canvas as live transclusions <span class="pf">P3</span></li>
+<li>Freehand ink with pressure and tilt <span class="pf">P3</span></li>
+<li>Highlighter, eraser and lasso select <span class="pf">P3</span></li>
+<li>Palm rejection and pen-only mode <span class="pf">P3</span></li>
+<li>Shape recognition and snapping guides <span class="pf">P3</span></li>
+<li>Freeform pages you can write anywhere on <span class="pf">P3</span></li>
+<li>Mermaid diagram blocks <span class="pf">P3</span></li>
+<li>Excalidraw-compatible drawings <span class="pf">P3</span></li>
+<li>Export a board to SVG, PNG or PDF <span class="pf">P3</span></li>
+<li>Image and PDF annotation <span class="pf">P4</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Sticky notes</h4><ul class="fl">
+<li>Twelve stable note colours <span class="pf">P1</span></li>
+<li>Pinned to the top of the board <span class="pf">P1</span></li>
+<li>Always-on-top sticky windows on desktop <span class="pf">P2</span></li>
+<li>Home-screen single-note widget <span class="pf">P2</span></li>
+<li>Checklist widget with tickable boxes <span class="pf">P2</span></li>
+<li>Sticky position remembered per monitor <span class="pf">P2</span></li>
+<li>One note object across every surface <span class="pf">P2</span></li>
+<li>Sticky stack widget you swipe through <span class="pf">P3</span></li>
+<li>Note list widget filtered by label <span class="pf">P3</span></li>
+<li>Always-on-top pin toggle on every sticky <span class="pf">P2</span></li>
+<li>Auto-collapse to a title strip on mouse-out <span class="pf">P2</span></li>
+<li>Hover to peek, click to keep it open <span class="pf">P2</span></li>
+<li>Never collapses mid-sentence or mid-selection <span class="pf">P2</span></li>
+<li>Collapse on focus loss for keyboard users <span class="pf">P3</span></li>
+<li>Dock a sticky to a screen edge as a colour tab <span class="pf">P3</span></li>
+<li>Adjustable opacity and click-through when collapsed <span class="pf">P3</span></li>
+<li>Summon-all and hide-all shortcuts <span class="pf">P3</span></li>
+<li>Show on all workspaces <span class="pf">P3</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Daily journal</h4><ul class="fl">
+<li>One shortcut opens today's page for the active project <span class="pf">P2</span></li>
+<li>Per-project daily templates <span class="pf">P2</span></li>
+<li>Deploy, working on, blocked, discuss, done sections <span class="pf">P2</span></li>
+<li>Unticked tasks roll forward with their original date <span class="pf">P3</span></li>
+<li>Stand-up view across all projects <span class="pf">P3</span></li>
+<li>Week roll-up exported as a status report <span class="pf">P3</span></li>
+<li>Calendar and streak view of the journal <span class="pf">P3</span></li>
+<li>Saved query of every open task, any day, any project <span class="pf">P3</span></li>
+<li>Widget tile straight to today's page <span class="pf">P3</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Trackers and tables</h4><ul class="fl">
+<li>Spreadsheet view with real keyboard navigation <span class="pf">P3</span></li>
+<li>Fill-down and multi-row select <span class="pf">P3</span></li>
+<li>Group by repo, device, status or any field <span class="pf">P3</span></li>
+<li>Every row opens as a full note with screenshots and logs <span class="pf">P3</span></li>
+<li>Ink annotation on a pasted screenshot <span class="pf">P3</span></li>
+<li>Saved views per recurring question <span class="pf">P3</span></li>
+<li>CSV import and export that round-trips <span class="pf">P3</span></li>
+<li>Device, OS and build captured when filing from mobile <span class="pf">P4</span></li>
+<li>Time-in-status and time-to-fix from the edit log <span class="pf">P4</span></li>
+<li>Share one view by link, read-only or commentable <span class="pf">P4</span></li>
+<li>Bug ids link both ways with journal pages <span class="pf">P3</span></li>
+<li>One-way export of rows to GitHub issues <span class="pf">P5</span></li>
+<li>Two-way issue sync as a plugin <span class="pf">later</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Search</h4><ul class="fl">
+<li>Instant local full-text search <span class="pf">P1</span></li>
+<li>Command bar for actions and navigation <span class="pf">P1</span></li>
+<li>Recent and suggested results <span class="pf">P2</span></li>
+<li>Filter by label, field, date or type <span class="pf">P3</span></li>
+<li>Search inside text-based PDFs <span class="pf">P4</span></li>
+<li>Vault search that never leaves the device <span class="pf">P4</span></li>
+<li>Handwriting search <span class="pf">later</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Sync and devices</h4><ul class="fl">
+<li>Local-first storage, edits apply instantly offline <span class="pf">P1</span></li>
+<li>External file edits picked up live <span class="pf">P1</span></li>
+<li>Multi-device sync with automatic merge <span class="pf">P2</span></li>
+<li>No conflict dialogs for concurrent edits <span class="pf">P2</span></li>
+<li>Three-way merge that keeps a copy first <span class="pf">P2</span></li>
+<li>Direct LAN sync with no cloud involved <span class="pf">P2</span></li>
+<li>Resumable attachment upload and download <span class="pf">P2</span></li>
+<li>Per-device sync status and log <span class="pf">P2</span></li>
+<li>Self-hosted sync server <span class="pf">P2</span></li>
+<li>Selective sync per notebook <span class="pf">P4</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Accounts and security</h4><ul class="fl">
+<li>Fully usable with no account at all <span class="pf">P1</span></li>
+<li>Passkey sign-in <span class="pf">P2</span></li>
+<li>Email and password with authenticator codes <span class="pf">P2</span></li>
+<li>Google, Apple and GitHub sign-in <span class="pf">P2</span></li>
+<li>Device list with remote revoke <span class="pf">P2</span></li>
+<li>Device pairing by QR code <span class="pf">P2</span></li>
+<li>Account-level encryption of synced data <span class="pf">P2</span></li>
+<li>Biometric app lock <span class="pf">P3</span></li>
+<li>Session and auto-lock policy <span class="pf">P4</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Vault</h4><ul class="fl">
+<li>Separate passphrase that never leaves the device <span class="pf">P4</span></li>
+<li>Per-document keys with modern authenticated encryption <span class="pf">P4</span></li>
+<li>Biometric unlock with automatic relock <span class="pf">P4</span></li>
+<li>24-word recovery phrase <span class="pf">P4</span></li>
+<li>Encrypted local-only search index <span class="pf">P4</span></li>
+<li>Hidden from plugins unless explicitly granted <span class="pf">P4</span></li>
+<li>Attachment sizes padded to hide their shape <span class="pf">P4</span></li>
+<li>Published threat model and external review <span class="pf">P4</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Sharing</h4><ul class="fl">
+<li>Export any note or notebook <span class="pf">P1</span></li>
+<li>Public share link with instant revocation <span class="pf">P4</span></li>
+<li>Read-only or comment permissions <span class="pf">P4</span></li>
+<li>Password and expiry on a link <span class="pf">P4</span></li>
+<li>Comments on individual blocks <span class="pf">P4</span></li>
+<li>Live cursors and multiplayer editing <span class="pf">later</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Import and export</h4><ul class="fl">
+<li>Open any existing markdown folder as-is <span class="pf">P1</span></li>
+<li>Google Keep from a Takeout archive <span class="pf">P2</span></li>
+<li>Excalidraw files natively <span class="pf">P3</span></li>
+<li>Export to markdown, HTML or PDF <span class="pf">P3</span></li>
+<li>Notion over the official API <span class="pf">P4</span></li>
+<li>OneNote over Microsoft Graph <span class="pf">P4</span></li>
+<li>Evernote ENEX files <span class="pf">P4</span></li>
+<li>Import report listing anything lossy <span class="pf">P4</span></li>
+<li>Originals kept beside the converted notes <span class="pf">P4</span></li>
+<li>Whole account exported as one archive <span class="pf">P4</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Plugins and customisation</h4><ul class="fl">
+<li>Custom hotkeys throughout <span class="pf">P2</span></li>
+<li>Themes built from CSS variables <span class="pf">P3</span></li>
+<li>Custom fonts and note colours <span class="pf">P3</span></li>
+<li>Sandboxed plugin runtime with declared capabilities <span class="pf">P4</span></li>
+<li>Plugin registry with signed releases <span class="pf">P4</span></li>
+<li>Sideload a plugin from a file <span class="pf">P4</span></li>
+<li>Public API and command-line tool <span class="pf">P4</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Platforms</h4><ul class="fl">
+<li>Linux desktop app <span class="pf">P1</span></li>
+<li>Windows desktop app <span class="pf">P1</span></li>
+<li>Android phone and tablet app <span class="pf">P2</span></li>
+<li>Web app in any modern browser <span class="pf">P4</span></li>
+<li>macOS desktop app <span class="pf">P5</span></li>
+<li>iOS and iPadOS app <span class="pf">P5</span></li>
+<li>Keyboard-complete navigation <span class="pf">P5</span></li>
+<li>Screen reader support on core flows <span class="pf">P5</span></li>
+<li>Five languages at launch <span class="pf">P5</span></li>
+</ul></div>
+
+<div class="featgrp"><h4>Data safety</h4><ul class="fl">
+<li>Every note is a plain file you can open elsewhere <span class="pf">P1</span></li>
+<li>Index fully rebuildable from the files alone <span class="pf">P1</span></li>
+<li>Crash-safe writes, never a half-written note <span class="pf">P1</span></li>
+<li>Trash with 30-day recovery <span class="pf">P1</span></li>
+<li>Automatic local snapshot before any risky write <span class="pf">P2</span></li>
+<li>Nightly convergence and corruption tests <span class="pf">P1</span></li>
+</ul></div>
+
+</div>
+<p class="hint">Roughly 140 features. About a third of them ship by phase 2, which is the first release anyone outside the team touches.</p>
+</section>
+
+
+<section id="overview">
+<h2>4 · System overview</h2>
+<p class="sec-note">One core library written once, wrapped in a thin shell per platform. The shells own windows, widgets, pens and permissions. The core owns everything that could ever disagree between devices.</p>
+
+<figure>
+<svg viewBox="0 0 760 560" role="img" aria-label="Layered architecture diagram: platform shells, shared UI, core engine, storage, and cloud services">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto">
+      <path d="M0,0 L7,3.2 L0,6.4 z" fill="#3d4e5c"/>
+    </marker>
+    <style>
+      .bx{fill:#fff;stroke:#15202a;stroke-width:1.2}
+      .lb{font-family:Archivo,sans-serif;font-size:12.5px;fill:#15202a}
+      .sm{font-family:Archivo,sans-serif;font-size:10.5px;fill:#6b7d8a}
+      .band{font-family:Archivo,sans-serif;font-size:10.5px;fill:#6b7d8a;letter-spacing:.04em}
+      .ln{stroke:#3d4e5c;stroke-width:1.2;marker-end:url(#ar)}
+    </style>
+  </defs>
+
+  <rect x="8" y="8" width="744" height="96" fill="#eef3f6" stroke="#c3d0d8"/>
+  <text class="band" x="20" y="26">PLATFORM SHELLS · native, thin, replaceable</text>
+  <g>
+    <rect class="bx" x="20" y="36" width="132" height="54" rx="2"/>
+    <text class="lb" x="32" y="58">Tauri desktop</text><text class="sm" x="32" y="76">Linux · Windows · macOS</text>
+    <rect class="bx" x="164" y="36" width="132" height="54" rx="2"/>
+    <text class="lb" x="176" y="58">Tauri mobile</text><text class="sm" x="176" y="76">Android · iOS</text>
+    <rect class="bx" x="308" y="36" width="120" height="54" rx="2"/>
+    <text class="lb" x="320" y="58">PWA</text><text class="sm" x="320" y="76">browser, WASM core</text>
+    <rect class="bx" x="440" y="36" width="140" height="54" rx="2"/>
+    <text class="lb" x="452" y="58">Widgets &amp; stickies</text><text class="sm" x="452" y="76">native per OS</text>
+    <rect class="bx" x="592" y="36" width="148" height="54" rx="2"/>
+    <text class="lb" x="604" y="58">CLI &amp; headless</text><text class="sm" x="604" y="76">import, export, backup</text>
+  </g>
+
+  <rect x="8" y="122" width="744" height="92" fill="#fff8e9" stroke="#e9a73c"/>
+  <text class="band" x="20" y="140">SHARED INTERFACE · one TypeScript codebase</text>
+  <g>
+    <rect class="bx" x="20" y="150" width="138" height="50" rx="2"/><text class="lb" x="32" y="170">Editor</text><text class="sm" x="32" y="188">blocks, markdown</text>
+    <rect class="bx" x="170" y="150" width="138" height="50" rx="2"/><text class="lb" x="182" y="170">Canvas</text><text class="sm" x="182" y="188">shapes, ink, embeds</text>
+    <rect class="bx" x="320" y="150" width="138" height="50" rx="2"/><text class="lb" x="332" y="170">Views</text><text class="sm" x="332" y="188">board, table, calendar</text>
+    <rect class="bx" x="470" y="150" width="128" height="50" rx="2"/><text class="lb" x="482" y="170">Command bar</text><text class="sm" x="482" y="188">search, quick add</text>
+    <rect class="bx" x="610" y="150" width="130" height="50" rx="2"/><text class="lb" x="622" y="170">Plugin host</text><text class="sm" x="622" y="188">sandboxed UI</text>
+  </g>
+
+  <line class="ln" x1="380" y1="214" x2="380" y2="238"/>
+  <line class="ln" x1="330" y1="238" x2="330" y2="216" stroke-dasharray="4 3"/>
+
+  <rect x="8" y="246" width="744" height="128" fill="#fff" stroke="#15202a" stroke-width="1.6"/>
+  <text class="band" x="20" y="264">CORE ENGINE · Rust, compiled native and to WebAssembly</text>
+  <g>
+    <rect class="bx" x="20" y="274" width="138" height="86" rx="2" fill="#f3f7f6"/>
+    <text class="lb" x="32" y="296">Document store</text><text class="sm" x="32" y="314">block tree, schemas</text><text class="sm" x="32" y="330">validation</text><text class="sm" x="32" y="346">history</text>
+    <rect class="bx" x="170" y="274" width="138" height="86" rx="2" fill="#f3f7f6"/>
+    <text class="lb" x="182" y="296">CRDT + sync</text><text class="sm" x="182" y="314">update log</text><text class="sm" x="182" y="330">snapshots</text><text class="sm" x="182" y="346">presence</text>
+    <rect class="bx" x="320" y="274" width="138" height="86" rx="2" fill="#f3f7f6"/>
+    <text class="lb" x="332" y="296">File bridge</text><text class="sm" x="332" y="314">watcher, three-way</text><text class="sm" x="332" y="330">markdown ⇄ blocks</text><text class="sm" x="332" y="346">attachments</text>
+    <rect class="bx" x="470" y="274" width="128" height="86" rx="2" fill="#f3f7f6"/>
+    <text class="lb" x="482" y="296">Crypto</text><text class="sm" x="482" y="314">vault keys</text><text class="sm" x="482" y="330">device pairing</text><text class="sm" x="482" y="346">wrapping</text>
+    <rect class="bx" x="610" y="274" width="130" height="86" rx="2" fill="#f3f7f6"/>
+    <text class="lb" x="622" y="296">Index</text><text class="sm" x="622" y="314">full text</text><text class="sm" x="622" y="330">links, tags</text><text class="sm" x="622" y="346">queries</text>
+  </g>
+
+  <line class="ln" x1="200" y1="374" x2="200" y2="400"/>
+  <line class="ln" x1="560" y1="374" x2="560" y2="400"/>
+
+  <rect x="8" y="408" width="360" height="66" fill="#eef3f6" stroke="#c3d0d8"/>
+  <text class="band" x="20" y="426">LOCAL STORAGE · the source of truth</text>
+  <text class="lb" x="20" y="448">Your folder: .md, .excalidraw, media</text>
+  <text class="sm" x="20" y="464">plus a rebuildable SQLite index and the update log</text>
+
+  <rect x="392" y="408" width="360" height="66" fill="#eef3f6" stroke="#c3d0d8"/>
+  <text class="band" x="404" y="426">CLOUD SERVICES · optional, self-hostable</text>
+  <text class="lb" x="404" y="448">Identity · sync relay · blobs · push</text>
+  <text class="sm" x="404" y="464">stores opaque updates; never needs to read your content</text>
+
+  <rect x="8" y="490" width="744" height="58" fill="#fff" stroke="#c3d0d8" stroke-dasharray="5 4"/>
+  <text class="band" x="20" y="508">CROSS-CUTTING</text>
+  <text class="sm" x="20" y="528">Telemetry (opt-in) · crash reporting · feature flags · migration engine · accessibility · localisation · backup and restore</text>
+</svg>
+<figcaption>Everything that can disagree between two devices lives in the core. Shells stay thin so a new platform is weeks, not months.</figcaption>
+</figure>
+
+<h3>Why one core</h3>
+<p>Sync, merge, validation, search and encryption are the parts where a bug means lost or corrupted notes. Writing them once in a memory-safe language and running the exact same compiled logic on every platform is the difference between one hard problem and six subtly different ones. The shells then only handle what is genuinely native: windowing, widgets, pen events, notifications, file pickers, biometrics.</p>
+</section>
+
+<section id="stack">
+<h2>5 · Stack decision</h2>
+<p class="sec-note">Scored against the constraints that actually bind this product: a rich text and canvas editor, a JavaScript plugin ecosystem, six targets, and a small team.</p>
+<div class="scroller">
+<table>
+<thead><tr><th>Option</th><th>Reach</th><th>Editor &amp; canvas fit</th><th>Plugin ecosystem</th><th>Cost to a small team</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>Rust core + Tauri v2 + web UI</td><td>All six from one UI codebase</td><td>Excellent — the mature editor and diagram libraries are all web</td><td>Native fit; JS plugins run in a sandboxed frame</td><td>Lowest; one UI, one core</td><td><span class="tag t-yes">Chosen</span></td></tr>
+<tr><td>Flutter everywhere</td><td>All six</td><td>Weak for complex rich text; Excalidraw and Mermaid would need rewriting</td><td>Dart-only, small</td><td>Medium, plus rewrite cost</td><td><span class="tag t-no">No</span></td></tr>
+<tr><td>Electron + Capacitor</td><td>All six</td><td>Same web strengths</td><td>Same</td><td>Heavy binaries, poor battery and memory on mobile</td><td><span class="tag t-no">No</span></td></tr>
+<tr><td>Kotlin Multiplatform + native UIs</td><td>All six</td><td>Best native feel, best pen latency</td><td>Fragmented</td><td>Three UI codebases; roughly triple the interface work</td><td><span class="tag t-no">Not now</span></td></tr>
+<tr><td>Native per platform</td><td>All six</td><td>Best possible</td><td>Fragmented</td><td>Out of reach below ~20 engineers</td><td><span class="tag t-no">No</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="pick">
+<span class="f-alt">Decision</span>
+<p><strong>Rust core exposed three ways</strong> — a native library for desktop, UniFFI bindings for Android and iOS, and a WebAssembly build for the browser — with a single TypeScript and React interface shipped inside Tauri v2 on all five app targets and served directly on the web. If Rust is not on the team, section 5 sets out the same architecture in TypeScript — the shape survives the language change.</p>
+</div>
+
+<h4>Component choices</h4>
+<ul>
+  <li><strong>Editor:</strong> a block editor built on ProseMirror, with a markdown serializer that round-trips losslessly. Not a from-scratch contenteditable.</li>
+  <li><strong>CRDT:</strong> Loro or Yjs, decided by the week-6 spike; both give sequence CRDTs for text and maps for properties, with binary updates.</li>
+  <li><strong>Local index:</strong> SQLite with FTS5, plus Tantivy if ranking quality demands it.</li>
+  <li><strong>Canvas:</strong> custom scene graph over WebGL2 with a WebGPU path where available; tiled rendering and a separate low-latency ink layer.</li>
+  <li><strong>Backend:</strong> Rust with axum, Postgres, Redis, S3-compatible object storage.</li>
+</ul>
+
+<div class="warn">
+<span class="f-alt">Known weak point</span>
+<p>Tauri v2 mobile is younger than the desktop story, and pen latency inside a WebView is the single riskiest assumption in this stack. Phase 0 includes a measured spike on a mid-range Android tablet with a stylus. If latency exceeds 40&nbsp;ms after prediction, the ink surface — and only the ink surface — becomes a native view composited under the WebView, which is scoped at three weeks.</p>
+</div>
+</section>
+
+<section id="norust">
+<h2>6 · Building this without Rust</h2>
+<p class="sec-note">The Rust core in section 5 is an optimisation, not a requirement. Obsidian, Notion, Affine, Excalidraw and tldraw are all TypeScript products. If Rust is not on the team, the architecture survives intact — only the implementation language of the core changes.</p>
+
+<div class="scroller">
+<table>
+<thead><tr><th>Layer</th><th>Path A — Rust core</th><th>Path B — TypeScript core</th></tr></thead>
+<tbody>
+<tr><td>Core logic</td><td>Rust, compiled native and to WebAssembly</td><td>TypeScript, running in the WebView on every platform</td></tr>
+<tr><td>CRDT</td><td>Loro or Automerge, bound into each shell</td><td>Yjs, with <code>y-prosemirror</code>, <code>y-indexeddb</code> and <code>y-websocket</code> already written</td></tr>
+<tr><td>Editor</td><td colspan="2">ProseMirror either way — the editor was always going to be TypeScript</td></tr>
+<tr><td>Canvas</td><td>Custom renderer with geometry in Rust</td><td>tldraw as a base, or the same custom renderer with geometry in TypeScript</td></tr>
+<tr><td>Local index</td><td>SQLite driven from Rust</td><td>SQLite in a worker — <code>better-sqlite3</code> on desktop, <code>wa-sqlite</code> over OPFS on web and mobile</td></tr>
+<tr><td>Crypto</td><td>Audited Rust crates</td><td>WebCrypto plus <code>libsodium.js</code>, Argon2 as WASM — never hand-rolled</td></tr>
+<tr><td>App shell</td><td>Tauri v2</td><td>Tauri v2 still works; the generated shell is boilerplate and a handful of plugin calls. Electron plus Capacitor is the fallback</td></tr>
+<tr><td>Server</td><td>Rust with axum</td><td>Node or Bun with Fastify or Hono; a Yjs-compatible relay is a few hundred lines</td></tr>
+<tr><td>Team</td><td>Needs at least one experienced Rust engineer</td><td>You can start this week</td></tr>
+</tbody>
+</table>
+</div>
+<p class="hint">Note that Tauri does not require you to write Rust. The shell is scaffolded for you; touching it means adding a plugin or a command, which is a few lines each time. Path B can keep Tauri and its small binaries without learning the language.</p>
+
+<h3>What Path B actually costs</h3>
+<ul>
+<li><strong>Large vaults.</strong> Indexing 10,000 notes in JavaScript is fine if it happens in a worker against SQLite full-text search, and painful if it happens on the main thread. This is an architecture decision on day one, not a tuning exercise later.</li>
+<li><strong>Memory and battery on mobile.</strong> A WebView core costs more of both. It shows up as background sync being killed by the OS sooner, so schedule sync work rather than holding a socket open.</li>
+<li><strong>Ink latency.</strong> The riskiest item, and it is risky on both paths — the ink surface may end up native regardless. Budget the same three-week fallback.</li>
+<li><strong>Plugin sandboxing.</strong> Without a WebAssembly host boundary you rely on iframes and workers with a message port. Workable and widely used, but the capability model has to be enforced by the host rather than the runtime.</li>
+<li><strong>Merge correctness at scale.</strong> Yjs is mature and battle-tested, so this is the least worrying item. Document sizes above a few megabytes want snapshotting either way.</li>
+</ul>
+
+<div class="pick">
+<span class="f-alt">Keep the door open</span>
+<p>Put the core behind a narrow interface from the first commit — <code>store</code>, <code>merge</code>, <code>index</code>, <code>crypto</code>, <code>ink</code> — with no framework types crossing it. Only three of those ever justify being rewritten in Rust or WebAssembly: the search index, the ink pipeline, and the file diff and merge. Everything else stays TypeScript forever. That turns "we chose wrong" into a two-week port of one module rather than a rewrite.</p>
+</div>
+
+<div class="grid2">
+<div class="sheet"><h4>Choose Path B if</h4><p>You are one to three people, TypeScript is your strongest language, and getting to a usable app in month five matters more than the last twenty percent of performance. This is the right answer for most people reading this.</p></div>
+<div class="sheet"><h4>Choose Path A if</h4><p>You are hiring to six or more, at least one person has shipped production Rust, and you expect vaults in the tens of thousands of notes with heavy ink from day one. Or you hire one Rust engineer for the core only and own the interface yourself.</p></div>
+</div>
+
+<p>If you want to learn Rust on this project anyway, do not learn it on the sync engine or the crypto — those are the two places where a beginner's mistake silently destroys someone's notes. Port the search indexer first: self-contained, easy to test against the TypeScript version, and the speedup is measurable. Realistically you are two or three months from being productive, which is roughly the whole of phase 0 and phase 1.</p>
+
+<p><strong>Schedule impact:</strong> Path B reaches M1 about a month sooner and may spend that month back around M3 if the canvas hits a performance wall. The eighteen-month shape in section 20 holds on either path.</p>
+</section>
+
+
+<section id="data">
+<h2>7 · Data model</h2>
+<p class="sec-note">Files are what you own. Blocks are what the app edits. The index is disposable. Keeping those three roles straight is what lets Obsidian-style freedom and Notion-style structure exist in one product.</p>
+
+<h3>The folder</h3>
+<div class="sheet">
+<p class="mono" style="font-size:.82rem;line-height:1.8;max-width:none">
+MyNotes/<br>
+&nbsp;&nbsp;Journal/2026-09-10.md<br>
+&nbsp;&nbsp;Reading/Papers.collection.yaml<br>
+&nbsp;&nbsp;Reading/Attention is all you need.md<br>
+&nbsp;&nbsp;Boards/Roadmap.canvas.json<br>
+&nbsp;&nbsp;Sketches/Wireframe.excalidraw<br>
+&nbsp;&nbsp;_media/2026/09/whiteboard-photo.jpg<br>
+&nbsp;&nbsp;.mosaic/index.sqlite&nbsp;&nbsp;<span style="color:#6b7d8a">rebuildable</span><br>
+&nbsp;&nbsp;.mosaic/oplog/&nbsp;&nbsp;<span style="color:#6b7d8a">CRDT updates and snapshots</span><br>
+&nbsp;&nbsp;.mosaic/vault/&nbsp;&nbsp;<span style="color:#6b7d8a">encrypted blobs only</span>
+</p>
+</div>
+<p>Point Mosaic at an existing Obsidian folder and it works, because that folder already is the format. Everything Mosaic adds beyond markdown lives in frontmatter or in the hidden directory, so another editor sees ordinary files.</p>
+
+<h3>Blocks</h3>
+<p>A note is an ordered tree of blocks. Every block carries a stable identifier, a type, content, and optional properties. Stable ids are what make block links, transclusion, per-block history and fine-grained merging possible; they are stored as an unobtrusive trailing anchor in markdown and are only materialised for blocks that something actually references.</p>
+<div class="scroller">
+<table>
+<thead><tr><th>Block family</th><th>Types</th><th>Serialised as</th></tr></thead>
+<tbody>
+<tr><td>Text</td><td>paragraph, heading, list item, task, quote, callout, code, table row</td><td>CommonMark plus a small documented extension set</td></tr>
+<tr><td>Embed</td><td>image, file, audio, web bookmark, block reference, query result</td><td>Markdown link or fenced directive</td></tr>
+<tr><td>Diagram</td><td>Mermaid, drawing, shape group</td><td>Fenced text block, or a sidecar <code>.excalidraw</code> file</td></tr>
+<tr><td>Canvas</td><td>frame, sticky, connector, ink stroke, embedded note card</td><td><code>.canvas.json</code>, ink strokes in a compact binary sidecar</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Typed collections — the Notion half</h3>
+<p>A collection is a schema file that claims a folder or a query. It declares fields with types: text, number, date, select, multi-select, checkbox, url, relation, rollup, formula. Note properties live in YAML frontmatter, which stays human-readable and diff-friendly.</p>
+<ul>
+  <li><strong>Validation on write.</strong> Typing a word into a number field is refused in the editor, the way a database column would refuse it.</li>
+  <li><strong>Repair, never destroy.</strong> If a file is edited outside Mosaic and violates the schema, the value is preserved verbatim and flagged in a repair queue. Structure never justifies deleting what you wrote.</li>
+  <li><strong>Views are queries.</strong> Table, board, calendar, gallery and list are saved queries with a layout, computed from the SQLite index. A note can appear in many views and belongs to none of them.</li>
+  <li><strong>Relations</strong> are links plus an index; rollups and formulas are evaluated in the core so every platform agrees on the result.</li>
+</ul>
+
+<h3>Search and links</h3>
+<p>The index holds full text, block metadata, properties, tags, outbound and inbound links, and canvas object positions. It is derived: deleting it costs a rebuild and nothing else. That rule is enforced by a nightly test that wipes the index and asserts the app is byte-identical afterwards.</p>
+</section>
+
+<section id="sync">
+<h2>8 · Sync engine</h2>
+<p class="sec-note">Local-first. Every device holds a complete replica, edits apply immediately, and the network is an optimisation. The server stores opaque updates and never has to understand a note.</p>
+
+<figure>
+<svg viewBox="0 0 760 300" role="img" aria-label="Sync flow between two devices and the relay server">
+  <defs>
+    <marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 z" fill="#1f6f68"/></marker>
+    <style>
+      .b2{fill:#fff;stroke:#15202a;stroke-width:1.2}
+      .l2{font-family:Archivo,sans-serif;font-size:12px;fill:#15202a}
+      .s2{font-family:Archivo,sans-serif;font-size:10.5px;fill:#6b7d8a}
+      .c2{stroke:#1f6f68;stroke-width:1.4;fill:none;marker-end:url(#ar2)}
+    </style>
+  </defs>
+  <rect class="b2" x="14" y="60" width="190" height="180" rx="2"/>
+  <text class="l2" x="28" y="84">Laptop, offline</text>
+  <text class="s2" x="28" y="106">1 · edit applies locally</text>
+  <text class="s2" x="28" y="124">2 · block tree updated</text>
+  <text class="s2" x="28" y="142">3 · markdown file written</text>
+  <text class="s2" x="28" y="160">4 · update appended to log</text>
+  <text class="s2" x="28" y="178">5 · index refreshed</text>
+  <text class="s2" x="28" y="204">total: under 16 ms</text>
+
+  <rect class="b2" x="286" y="60" width="188" height="180" rx="2" fill="#f3f7f6"/>
+  <text class="l2" x="300" y="84">Relay</text>
+  <text class="s2" x="300" y="106">append-only log per doc</text>
+  <text class="s2" x="300" y="124">no content parsing</text>
+  <text class="s2" x="300" y="142">presence and awareness</text>
+  <text class="s2" x="300" y="160">snapshot compaction</text>
+  <text class="s2" x="300" y="178">push fan-out</text>
+  <text class="s2" x="300" y="204">self-hostable</text>
+
+  <rect class="b2" x="556" y="60" width="190" height="180" rx="2"/>
+  <text class="l2" x="570" y="84">Tablet</text>
+  <text class="s2" x="570" y="106">receives updates</text>
+  <text class="s2" x="570" y="124">merges without asking</text>
+  <text class="s2" x="570" y="142">cursor of other device</text>
+  <text class="s2" x="570" y="160">files rewritten on disk</text>
+
+  <path class="c2" d="M204 116 H286"/>
+  <path class="c2" d="M474 116 H556"/>
+  <path class="c2" d="M556 186 H474"/>
+  <path class="c2" d="M286 186 H204"/>
+  <path class="c2" d="M204 262 C 330 300, 430 300, 556 262" stroke-dasharray="5 4"/>
+  <text class="s2" x="300" y="290">direct LAN sync over mDNS and QUIC — no cloud needed at home</text>
+  <text class="s2" x="216" y="110">updates</text>
+  <text class="s2" x="486" y="110">fan-out</text>
+</svg>
+<figcaption>The relay is deliberately unintelligent. That is what makes end-to-end encryption and self-hosting cheap rather than a rewrite.</figcaption>
+</figure>
+
+<h3>How merging works</h3>
+<ul>
+  <li><strong>Text</strong> uses a sequence CRDT, so two people typing in the same paragraph converge without a conflict dialog.</li>
+  <li><strong>Properties</strong> use a last-writer-wins register per field, with typed coercion — the loser is kept in history, not discarded.</li>
+  <li><strong>Canvas objects</strong> use a map of shapes keyed by id; moves are last-writer-wins per object, so two people moving different shapes never collide.</li>
+  <li><strong>Ink strokes</strong> are immutable once finished, which makes them trivially mergeable: a stroke is only ever added or removed.</li>
+</ul>
+
+<h3>The hard part: files and CRDTs at the same time</h3>
+<p>Two sources of change exist — the app, and whatever else touched the file. The file bridge handles it with a stored base version per file: on an external change, it diffs the file against the last known text, converts that diff into CRDT operations, and applies them as if a peer had made them. Ambiguity is surfaced once, in a banner offering both versions side by side, and the original file is always preserved in a timestamped copy first.</p>
+
+<h4>Version history</h4>
+<p>The update log is the history. Snapshots every few hundred updates keep loading fast; older updates compact into snapshots on a schedule with a retention window that is 30 days locally and configurable in the cloud. Restore works per note, per block, and per canvas object.</p>
+
+<h4>Attachments</h4>
+<p>Content-addressed by hash, deduplicated, uploaded separately from document updates with resumable transfers. Large media stays out of the CRDT log entirely — only the hash and metadata are synced.</p>
+</section>
+
+<section id="auth">
+<h2>9 · Accounts and auth</h2>
+<p class="sec-note">An account is optional until the second device. Everything works signed out, on one machine, forever.</p>
+<ul>
+  <li><strong>Sign-in:</strong> passkeys first, with email and password as the fallback, plus Google, Apple and GitHub. Time-based codes and recovery codes for second factor on the password path.</li>
+  <li><strong>Sessions:</strong> short-lived access tokens with rotating, device-bound refresh tokens. A device list in settings, each entry revocable, with the revocation taking effect on the relay within seconds.</li>
+  <li><strong>Devices:</strong> each install generates a key pair on first run. New devices are approved by an existing device — a QR code or a six-digit code — which is also how encryption keys travel without ever reaching the server.</li>
+  <li><strong>Critical separation:</strong> the sign-in credential is not the encryption key. This is what allows social sign-in to coexist with end-to-end encryption, and it is why a forgotten passphrase cannot be recovered by support.</li>
+  <li><strong>Self-hosting:</strong> a single binary plus Postgres and an S3-compatible bucket. Teams get OIDC and SCIM after 1.0.</li>
+</ul>
+</section>
+
+<section id="vault">
+<h2>10 · Vault and encryption</h2>
+<p class="sec-note">Two tiers, because "encrypted" and "the server literally cannot read it" are different promises and users deserve to know which one they have.</p>
+
+<div class="grid2">
+<div class="sheet">
+<h4>Tier one — account encryption</h4>
+<p>Everything synced is encrypted with an account key held on your devices. Convenient: unlocks with your session, works with link sharing and previews. The server stores ciphertext.</p>
+</div>
+<div class="sheet">
+<h4>Tier two — the Vault</h4>
+<p>A separate passphrase, never sent anywhere, never held after lock. Unlocks with biometrics locally, auto-locks on a timer and on sleep. Vault notes are excluded from server-side features and from plugins unless explicitly granted.</p>
+</div>
+</div>
+
+<h4>Construction</h4>
+<ul>
+  <li>Content encrypted with XChaCha20-Poly1305; a fresh data key per document, wrapped by the vault key.</li>
+  <li>Vault key derived with Argon2id, parameters tuned per device class and stored with the ciphertext.</li>
+  <li>Device-to-device key transfer over X25519, authenticated by the pairing code.</li>
+  <li>Recovery by a 24-word phrase generated at setup; optionally split into shares for people who want a safety net.</li>
+  <li>Attachment filenames and sizes padded into buckets, because file size is a leak.</li>
+  <li>Search inside the vault runs against a local-only index that is itself encrypted at rest.</li>
+</ul>
+
+<h4>What the server can still see</h4>
+<div class="scroller">
+<table>
+<thead><tr><th>Visible to the server</th><th>Never visible</th></tr></thead>
+<tbody>
+<tr><td>Account identity and billing</td><td>Note text, titles, tags, properties</td></tr>
+<tr><td>Document identifiers, sizes, update timing</td><td>Attachment content and true filenames</td></tr>
+<tr><td>Device list and IP addresses</td><td>Vault passphrase or any key derived from it</td></tr>
+<tr><td>Sharing graph for shared documents</td><td>Anything inside the vault, under any circumstance</td></tr>
+</tbody>
+</table>
+</div>
+<p class="hint">Stated plainly in the product too, on the screen where the vault is created. A security promise nobody understands is not a security feature.</p>
+</section>
+
+<section id="capture">
+<h2>11 · Capture and sticky notes</h2>
+<p class="sec-note">The Keep and OneNote pillar. Capture is a latency problem, and sticky notes are a windowing problem — neither is solved by the note editor.</p>
+
+<h3>Getting a thought in</h3>
+<div class="scroller">
+<table>
+<thead><tr><th>Surface</th><th>Linux</th><th>Windows</th><th>macOS</th><th>Android</th><th>iOS</th><th>Web</th></tr></thead>
+<tbody>
+<tr><td>Global hotkey overlay</td><td><span class="tag t-yes">Yes</span></td><td><span class="tag t-yes">Yes</span></td><td><span class="tag t-later">Ph 5</span></td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>Home-screen widget</td><td><span class="tag t-yes">Desktop applet</span></td><td><span class="tag t-yes">Yes</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-yes">Yes</span></td><td><span class="tag t-later">Ph 5</span></td><td>—</td></tr>
+<tr><td>Share target</td><td><span class="tag t-yes">Yes</span></td><td><span class="tag t-yes">Yes</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-yes">Yes</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-yes">PWA</span></td></tr>
+<tr><td>Notification with inline reply</td><td><span class="tag t-yes">Yes</span></td><td><span class="tag t-yes">Yes</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-yes">Yes</span></td><td><span class="tag t-no">Limited</span></td><td>—</td></tr>
+<tr><td>Quick-settings tile / lock screen</td><td>—</td><td>—</td><td>—</td><td><span class="tag t-yes">Yes</span></td><td><span class="tag t-later">Control Centre</span></td><td>—</td></tr>
+<tr><td>Voice memo with transcript</td><td><span class="tag t-later">Ph 4</span></td><td><span class="tag t-later">Ph 4</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-later">Ph 4</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-later">Ph 4</span></td></tr>
+</tbody>
+</table>
+</div>
+<p>The capture window is a separate lightweight process that starts with the OS and holds a pre-warmed editor. It writes straight to the log and returns; indexing, sync and file writing happen after the window is already closed.</p>
+
+<h3>Three meanings of "pinned"</h3>
+<ol>
+  <li><strong>Pinned in the app</strong> — the note sits at the top of the board, exactly like Keep.</li>
+  <li><strong>Pinned to the desktop</strong> — a frameless, always-on-top window with a colored background, remembering position per monitor and per workspace. On Wayland this uses the layer-shell protocol, on X11 the older window manager hints, on Windows a tool window with a topmost flag.</li>
+  <li><strong>Pinned to the system</strong> — an Android home-screen widget or an ongoing notification, an iOS widget later. Editable in place where the platform allows it; tapping opens the same note, not a copy.</li>
+</ol>
+<p>All three are flags on one note. A sticky is never a different object with its own storage, which is the mistake that makes other products' sticky notes a second, worse silo.</p>
+<p class="hint">Screen-by-screen layout, widget sizes and the phone navigation model are in section 12.</p>
+
+<h3>Sticky window behaviour on the desktop</h3>
+<p>A sticky that is always in the way is as useless as one you can never find. Two controls solve that, and they are independent of each other.</p>
+
+<figure>
+<svg viewBox="0 0 700 170" role="img" aria-label="Three sticky states: expanded, collapsed to a title strip, docked to a screen edge">
+<defs><marker id="arS" markerWidth="9" markerHeight="9" refX="7" refY="3.2" orient="auto"><path d="M0,0 L7,3.2 L0,6.4 z" fill="#6b7d8a"/></marker></defs>
+<style>.sl{font-family:Archivo,sans-serif;font-size:10.5px;fill:#6b7d8a}.sn{font-family:Archivo,sans-serif;font-size:11.5px;fill:#15202a}.sa{stroke:#6b7d8a;stroke-width:1.2;fill:none;marker-end:url(#arS)}</style>
+<rect x="14" y="28" width="150" height="104" rx="4" fill="#f6d97e" stroke="#15202a" stroke-width="1.2"/>
+<rect x="14" y="28" width="150" height="18" rx="4" fill="#e9c75c"/>
+<circle cx="152" cy="37" r="4" fill="#a86c07"/>
+<rect x="24" y="58" width="104" height="4" rx="2" fill="#a68a3c"/><rect x="24" y="70" width="124" height="4" rx="2" fill="#a68a3c"/><rect x="24" y="82" width="86" height="4" rx="2" fill="#a68a3c"/><rect x="24" y="94" width="112" height="4" rx="2" fill="#a68a3c"/>
+<text class="sn" x="14" y="150">Expanded</text><text class="sl" x="14" y="164">pointer is over it, or it is pinned</text>
+<path class="sa" d="M176 72 H242"/><text class="sl" x="180" y="64">mouse out</text>
+<rect x="256" y="28" width="150" height="20" rx="4" fill="#e9c75c" stroke="#15202a" stroke-width="1.2"/>
+<rect x="266" y="36" width="76" height="4" rx="2" fill="#8a6f24"/>
+<circle cx="394" cy="38" r="4" fill="#a86c07"/>
+<text class="sn" x="256" y="70">Collapsed</text><text class="sl" x="256" y="84">rolled up to its title strip</text>
+<text class="sl" x="256" y="98">hover to peek, click to keep it open</text>
+<path class="sa" d="M418 72 H484"/><text class="sl" x="420" y="64">dragged to edge</text>
+<rect x="660" y="28" width="26" height="104" rx="3" fill="#f6d97e" stroke="#15202a" stroke-width="1.2"/>
+<text class="sl" x="498" y="46">Docked</text>
+<text class="sl" x="498" y="62">a colour tab on the screen edge</text>
+<text class="sl" x="498" y="78">slides out on hover, hides on leave</text>
+<text class="sl" x="498" y="94">one tab per sticky, stacked</text>
+</svg>
+<figcaption>Collapse is per sticky, not a global mode. A pinned sticky can still auto-collapse; a pinned-and-expanded one simply stays put.</figcaption>
+</figure>
+
+<h4>The pin</h4>
+<ul>
+<li>A pin control in the corner of every sticky. Pinned means always on top of every other application, across workspaces.</li>
+<li>Unpinned, it behaves as an ordinary window and falls behind whatever you are working in.</li>
+<li>The state is stored on the note, so it survives a restart and applies to that sticky only.</li>
+<li>A global shortcut summons every sticky to the front, and another hides them all — useful before screen sharing.</li>
+</ul>
+
+<h4>Auto-collapse</h4>
+<ul>
+<li>When the pointer leaves, the sticky rolls up to its title strip after a short delay, default 600&nbsp;ms and adjustable.</li>
+<li>Hovering over the strip peeks it back open where it sits; clicking pins it open until you click away.</li>
+<li>It never collapses while the caret is in it, while text is selected, or while a drag is in progress. A note that swallows a half-typed sentence is worse than no note.</li>
+<li>Collapsed appearance is configurable: title strip, a colour tab docked to a screen edge, or just a drop in opacity.</li>
+<li>Optional click-through while collapsed, so a docked sticky never steals a click meant for the window behind it.</li>
+<li>Focus-out collapses too, not only mouse-out, so the behaviour works for someone navigating by keyboard.</li>
+</ul>
+
+<div class="warn">
+<span class="f-alt">Platform caveat</span>
+<p>Always-on-top and absolute window positioning are straightforward on Windows, macOS and X11. On Wayland they are not: compositors built on wlroots support the layer-shell protocol that this needs, while GNOME's does not expose it to ordinary applications. The fallback there is a normal always-on-top window without edge docking, and the setting is hidden rather than offered and broken. Worth confirming early if Linux is your main desktop.</p>
+</div>
+</section>
+
+<section id="mobile">
+<h2>12 · Mobile design</h2>
+<p class="sec-note">Two interfaces worth copying, and they disagree with each other. Keep is flat, instant and one screen deep. OneNote is a hierarchy you navigate. The phone app runs both, as two lenses on the same notes, and never as two stores.</p>
+
+<div class="grid3">
+<figure>
+<svg viewBox="0 0 220 400" role="img" aria-label="Wireframe of the board home screen">
+<style>
+.ph{fill:#fff;stroke:#15202a;stroke-width:1.4}.cd{stroke:#c3d0d8;stroke-width:.8}
+.tx{fill:#c3d0d8}.tt{font-family:Archivo,sans-serif;font-size:10px;fill:#15202a}
+.ts{font-family:Archivo,sans-serif;font-size:8.5px;fill:#6b7d8a}
+</style>
+<rect class="ph" x="10" y="10" width="200" height="380" rx="14"/>
+<rect x="24" y="26" width="172" height="20" rx="10" fill="#eef3f6" stroke="#c3d0d8" stroke-width=".8"/>
+<text class="ts" x="36" y="40">Search notes</text>
+<text class="ts" x="24" y="64">Pinned</text>
+<rect class="cd" x="24" y="70" width="82" height="58" rx="6" fill="#f6d97e"/>
+<rect class="tx" x="32" y="80" width="58" height="4" rx="2"/><rect class="tx" x="32" y="90" width="48" height="4" rx="2"/><rect class="tx" x="32" y="100" width="62" height="4" rx="2"/>
+<rect class="cd" x="114" y="70" width="82" height="76" rx="6" fill="#bfd9ef"/>
+<rect class="tx" x="122" y="80" width="52" height="4" rx="2"/>
+<rect x="122" y="92" width="7" height="7" rx="1.5" fill="none" stroke="#6b7d8a" stroke-width="1"/><rect class="tx" x="134" y="94" width="42" height="4" rx="2"/>
+<rect x="122" y="106" width="7" height="7" rx="1.5" fill="none" stroke="#6b7d8a" stroke-width="1"/><rect class="tx" x="134" y="108" width="34" height="4" rx="2"/>
+<text class="ts" x="24" y="148">Everything else</text>
+<rect class="cd" x="24" y="154" width="82" height="70" rx="6" fill="#fff"/>
+<rect class="tx" x="32" y="164" width="54" height="4" rx="2"/><rect class="tx" x="32" y="174" width="60" height="4" rx="2"/><rect class="tx" x="32" y="184" width="40" height="4" rx="2"/>
+<rect class="cd" x="114" y="172" width="82" height="52" rx="6" fill="#f0bfbe"/>
+<rect class="tx" x="122" y="182" width="50" height="4" rx="2"/><rect class="tx" x="122" y="192" width="58" height="4" rx="2"/>
+<rect class="cd" x="24" y="232" width="82" height="46" rx="6" fill="#b9e0cf"/>
+<rect class="tx" x="32" y="242" width="46" height="4" rx="2"/><rect class="tx" x="32" y="252" width="56" height="4" rx="2"/>
+<rect class="cd" x="114" y="232" width="82" height="62" rx="6" fill="#fff"/>
+<rect x="122" y="240" width="66" height="26" rx="3" fill="#dfe7ec"/><rect class="tx" x="122" y="274" width="50" height="4" rx="2"/>
+<rect x="24" y="318" width="172" height="30" rx="15" fill="#eef3f6" stroke="#c3d0d8" stroke-width=".8"/>
+<g fill="#3d4e5c"><rect x="40" y="330" width="10" height="7" rx="1"/><rect x="70" y="330" width="10" height="7" rx="1"/><circle cx="105" cy="333.5" r="4.5"/><rect x="130" y="330" width="10" height="7" rx="1"/><rect x="160" y="330" width="10" height="7" rx="1"/></g>
+<rect x="24" y="358" width="172" height="22" fill="none"/>
+<text class="tt" x="30" y="373">Board</text><text class="ts" x="86" y="373">Notebooks</text><text class="ts" x="158" y="373">Canvas</text>
+<rect x="28" y="376" width="30" height="2" fill="#e9a73c"/>
+</svg>
+<figcaption>Home is Keep: two-column masonry, colour cards, capture row within thumb reach.</figcaption>
+</figure>
+
+<figure>
+<svg viewBox="0 0 220 400" role="img" aria-label="Wireframe of notebook navigation">
+<rect class="ph" x="10" y="10" width="200" height="380" rx="14"/>
+<text class="ts" x="24" y="34">Work · Research</text>
+<line x1="24" y1="42" x2="196" y2="42" stroke="#c3d0d8" stroke-width=".8"/>
+<rect x="24" y="52" width="46" height="18" rx="9" fill="#f6d97e" stroke="#c3d0d8" stroke-width=".6"/><text class="ts" x="32" y="65">Papers</text>
+<rect x="76" y="52" width="46" height="18" rx="9" fill="#fff" stroke="#c3d0d8" stroke-width=".6"/><text class="ts" x="85" y="65">Specs</text>
+<rect x="128" y="52" width="46" height="18" rx="9" fill="#fff" stroke="#c3d0d8" stroke-width=".6"/><text class="ts" x="137" y="65">Notes</text>
+<text class="ts" x="180" y="65">+</text>
+<g>
+<rect x="24" y="84" width="4" height="44" fill="#e9a73c"/>
+<rect class="tx" x="36" y="92" width="70" height="5" rx="2"/><rect class="tx" x="36" y="104" width="140" height="3.5" rx="2"/><rect class="tx" x="36" y="113" width="110" height="3.5" rx="2"/>
+<line x1="24" y1="136" x2="196" y2="136" stroke="#dde5ea" stroke-width=".8"/>
+<rect x="24" y="144" width="4" height="44" fill="#e9a73c"/>
+<rect class="tx" x="36" y="152" width="88" height="5" rx="2"/><rect class="tx" x="36" y="164" width="130" height="3.5" rx="2"/><rect class="tx" x="36" y="173" width="96" height="3.5" rx="2"/>
+<line x1="24" y1="196" x2="196" y2="196" stroke="#dde5ea" stroke-width=".8"/>
+<rect x="24" y="204" width="4" height="44" fill="#e9a73c"/>
+<rect class="tx" x="36" y="212" width="62" height="5" rx="2"/><rect class="tx" x="36" y="224" width="136" height="3.5" rx="2"/><rect class="tx" x="36" y="233" width="74" height="3.5" rx="2"/>
+<line x1="24" y1="256" x2="196" y2="256" stroke="#dde5ea" stroke-width=".8"/>
+<rect x="24" y="264" width="4" height="44" fill="#e9a73c"/>
+<rect class="tx" x="36" y="272" width="80" height="5" rx="2"/><rect class="tx" x="36" y="284" width="120" height="3.5" rx="2"/><rect class="tx" x="36" y="293" width="88" height="3.5" rx="2"/>
+</g>
+<text class="ts" x="24" y="330">swipe ‹ › between pages</text>
+<circle cx="176" cy="330" r="16" fill="#15202a"/><text x="171" y="336" font-family="Archivo,sans-serif" font-size="16" fill="#fff">+</text>
+<text class="ts" x="30" y="373">Board</text><text class="tt" x="86" y="373">Notebooks</text><text class="ts" x="158" y="373">Canvas</text>
+<rect x="84" y="376" width="52" height="2" fill="#e9a73c"/>
+</svg>
+<figcaption>Notebooks is OneNote: section chips, colour spines inherited by pages, swipe between pages.</figcaption>
+</figure>
+
+<figure>
+<svg viewBox="0 0 220 400" role="img" aria-label="Wireframe of home screen widgets">
+<rect x="10" y="10" width="200" height="380" rx="14" fill="#eef3f6" stroke="#15202a" stroke-width="1.4"/>
+<rect x="24" y="30" width="172" height="34" rx="17" fill="#fff" stroke="#c3d0d8" stroke-width=".8"/>
+<text class="ts" x="36" y="51">Take a note</text>
+<g fill="#3d4e5c"><rect x="118" y="43" width="9" height="7" rx="1"/><circle cx="145" cy="46.5" r="4.5"/><rect x="167" y="43" width="9" height="7" rx="1"/></g>
+<rect x="24" y="78" width="82" height="82" rx="8" fill="#f6d97e" stroke="#c3d0d8" stroke-width=".8"/>
+<rect class="tx" x="34" y="92" width="50" height="4.5" rx="2"/><rect class="tx" x="34" y="104" width="62" height="3.5" rx="2"/><rect class="tx" x="34" y="113" width="44" height="3.5" rx="2"/><rect class="tx" x="34" y="122" width="56" height="3.5" rx="2"/>
+<text class="ts" x="34" y="148">single note</text>
+<rect x="114" y="78" width="82" height="82" rx="8" fill="#d6c9ea" stroke="#c3d0d8" stroke-width=".8"/>
+<rect class="tx" x="124" y="92" width="40" height="4.5" rx="2"/>
+<rect x="124" y="104" width="7" height="7" rx="1.5" fill="none" stroke="#6b7d8a" stroke-width="1"/><rect class="tx" x="136" y="106" width="42" height="3.5" rx="2"/>
+<rect x="124" y="118" width="7" height="7" rx="1.5" fill="none" stroke="#6b7d8a" stroke-width="1"/><rect class="tx" x="136" y="120" width="34" height="3.5" rx="2"/>
+<text class="ts" x="124" y="148">checklist</text>
+<rect x="24" y="174" width="172" height="96" rx="8" fill="#fff" stroke="#c3d0d8" stroke-width=".8"/>
+<text class="ts" x="34" y="192">Stickies · swipe</text>
+<rect x="34" y="200" width="46" height="58" rx="5" fill="#f0bfbe"/><rect x="88" y="200" width="46" height="58" rx="5" fill="#b9e0cf"/><rect x="142" y="200" width="46" height="58" rx="5" fill="#bfd9ef"/>
+<circle cx="176" cy="300" r="20" fill="#15202a"/><text x="167" y="305" font-family="Archivo,sans-serif" font-size="11" fill="#fff">•••</text>
+<text class="ts" x="24" y="306">bubble floats over other apps</text>
+<rect x="24" y="336" width="172" height="34" rx="8" fill="#fff" stroke="#c3d0d8" stroke-width=".8"/>
+<text class="ts" x="34" y="351">Groceries · 3 left</text><text class="ts" x="34" y="363">reply from the shade</text>
+</svg>
+<figcaption>Off-app surfaces: capture bar, single-note and checklist widgets, a sticky stack, a bubble, and an ongoing notification.</figcaption>
+</figure>
+</div>
+
+<h3>How the two models coexist</h3>
+<p>Board is where notes land. Notebooks is where they live. A quick capture goes into an Inbox section and shows on the board; filing it into a notebook section takes it off the board without copying or moving anything the user can see. A filed note can still be pinned back to the board, because pinning is a flag rather than a location.</p>
+<p>This lines up exactly with the file layout in section 7: a notebook is a top-level folder, a section is a subfolder, a page is a note file, the board is a saved query, and a sticky is a flag plus a colour. Neither view owns the data.</p>
+
+<h3>The Keep parts, kept</h3>
+<ul>
+<li>Two-column masonry, colour cards, checkbox previews and image thumbnails. Pinned notes in their own row above the rest.</li>
+<li>A capture row fixed at the bottom of the board: text, checklist, ink, photo, voice — one tap each, no menu, all within thumb reach.</li>
+<li>Long-press to multi-select, swipe to archive, and an undo that actually undoes.</li>
+<li>Labels as chips in the drawer; one search field covering text, labels, and later ink.</li>
+<li>The app opens on the board with content already drawn from local storage. No splash, no sync spinner, no modal that blocks writing.</li>
+</ul>
+
+<h3>The OneNote parts, kept</h3>
+<ul>
+<li>Breadcrumb plus a horizontal row of section chips, each carrying its colour, collapsible into the notebook list.</li>
+<li>Section colour runs down the spine of every page row, which is what makes a long list scannable at a glance.</li>
+<li>Swipe left and right to move between pages in a section, the way flipping through a notebook works.</li>
+<li>Freeform pages open in a reflowed reading layout on a phone, with one toggle to the true canvas. Full freeform placement is a tablet and desktop affordance; pretending otherwise on a 6-inch screen helps nobody.</li>
+<li>Sticky notes as a first-class surface rather than a separate app.</li>
+</ul>
+
+<h3>Widgets and off-app surfaces</h3>
+<div class="scroller">
+<table>
+<thead><tr><th>Surface</th><th>Size</th><th>Does</th><th>Phase</th></tr></thead>
+<tbody>
+<tr><td>Capture bar</td><td>4×1, resizable</td><td>Five one-tap targets straight into a new note. Never opens the full app first</td><td>2</td></tr>
+<tr><td>Single note</td><td>2×2 up to 4×4</td><td>Shows one note live; checkboxes tick from the home screen. This is the real pinned sticky</td><td>2</td></tr>
+<tr><td>Note list</td><td>4×2 or 4×4</td><td>Scrollable, filtered by label or section</td><td>3</td></tr>
+<tr><td>Sticky stack</td><td>2×2</td><td>Swipe through pinned stickies without opening anything</td><td>3</td></tr>
+<tr><td>Quick-settings tile and lock screen</td><td>—</td><td>One tap to a new note with the device still locked, written to a staging area that syncs after unlock</td><td>2</td></tr>
+<tr><td>Floating bubble</td><td>—</td><td>A sticky that sits above other apps while you work in them</td><td>4</td></tr>
+<tr><td>Ongoing notification</td><td>—</td><td>Pinned note in the shade with inline reply</td><td>2</td></tr>
+</tbody>
+</table>
+</div>
+<p class="hint">Widgets read from the local store and redraw on write. They never wait on the network, and they never show a spinner — a widget that is sometimes empty teaches people to stop trusting it.</p>
+
+<h3>Tablet and pen</h3>
+<p>Two panes on a tablet — list and note — and three on a wide screen with the notebook tree pinned open. With a stylus detected the canvas goes full-bleed, palm rejection turns on, and the toolbar moves to the side the pen is not on. An attached keyboard enables the same shortcuts as desktop, including the capture hotkey.</p>
+
+<h3>Visual language</h3>
+<ul>
+<li>One card style everywhere. Elevation appears only on a pinned or dragging card, never as decoration.</li>
+<li>Twelve note colours whose meaning is assigned by the user, stable across devices. Dynamic system colour is allowed for widget chrome only — the note colours themselves must not shift between a phone and a laptop.</li>
+<li>Dark mode desaturates the note colours rather than inverting them, so a yellow note is still recognisably that note.</li>
+</ul>
+
+<div class="pick">
+<span class="f-alt">Mobile release-blocking</span>
+<p>Board drawn from local storage in under 1.5&nbsp;s cold. Widget tap to a typed character in under 400&nbsp;ms. Capture, search and the note button all reachable one-handed. No dialog ever blocks writing — not for sync, not for sign-in, not for an update.</p>
+</div>
+</section>
+
+
+<section id="workflows">
+<h2>13 · Two workflows this has to nail</h2>
+<p class="sec-note">Features are only worth building if they compose into something you do every day. These two are the daily test: a project diary across several projects, and a bug table across several repos and devices. Both are built from the primitives already described — no new engine, no new store.</p>
+
+<h3>The daily journal</h3>
+<p>One page per day per project, created from a template, opened by a single shortcut. It is a collection with a date field, so the pages are ordinary markdown files that happen to be queryable.</p>
+
+<div class="grid2">
+<div class="sheet"><h4>The template</h4>
+<ul style="margin-bottom:0">
+<li><strong>Deploying today</strong> — tasks with a target</li>
+<li><strong>Working on</strong> — what is actually in progress</li>
+<li><strong>Blocked</strong> — with the reason, so it reads back usefully</li>
+<li><strong>To discuss</strong> — the stand-up list</li>
+<li><strong>Done</strong> — filled as the day goes</li>
+</ul>
+</div>
+<div class="sheet"><h4>The mechanics</h4>
+<ul style="margin-bottom:0">
+<li>One shortcut opens today's page for the active project, creating it if needed</li>
+<li>Unticked tasks roll forward to tomorrow, marked with the date they came from</li>
+<li>Completed items stay on the day they were finished</li>
+<li>A widget tile goes straight to today's page</li>
+<li>Per-project templates, so a backend project and a design project can differ</li>
+</ul>
+</div>
+</div>
+
+<p>Because every line is a block with properties rather than loose text, the same entries can be read back in other shapes without being copied anywhere:</p>
+<ul>
+<li><strong>Stand-up view</strong> — yesterday, today and blockers side by side, across every project, generated at the moment you open it.</li>
+<li><strong>Week roll-up</strong> — every "to discuss" line from all projects in one page, exportable as a status report.</li>
+<li><strong>Calendar and streak</strong> — the journal as a month grid, with gaps visible.</li>
+<li><strong>Open across projects</strong> — a saved query of every unticked task, regardless of which day's page it was written on.</li>
+</ul>
+<p>Mentioning a bug id, a repo or a person in a journal entry links it both ways, so a bug's page shows every day it was discussed without anyone maintaining that list.</p>
+
+<h3>The bug table</h3>
+<p>One project, several repositories, several devices. What is wanted is the ergonomics of a spreadsheet with the depth of a note behind each row, shareable without inviting anyone into a repo.</p>
+
+<div class="scroller">
+<table>
+<thead><tr><th>Field</th><th>Type</th><th>Why it earns a column</th></tr></thead>
+<tbody>
+<tr><td>Id</td><td>Auto number</td><td>Stable handle to reference from a journal entry or a commit message</td></tr>
+<tr><td>Title</td><td>Text</td><td>Also the note's title, so the row and the page are one object</td></tr>
+<tr><td>Repo</td><td>Select</td><td>The grouping you will use most</td></tr>
+<tr><td>Device</td><td>Multi-select</td><td>A bug on three devices and not a fourth is the useful fact</td></tr>
+<tr><td>Severity, Status</td><td>Select</td><td>Triage and the board view both key off these</td></tr>
+<tr><td>Version found</td><td>Text</td><td>Captured automatically when filed from the app</td></tr>
+<tr><td>Reproducible</td><td>Checkbox</td><td>Separates the hard ones at a glance</td></tr>
+<tr><td>Found, Fixed</td><td>Date</td><td>Feeds the calendar view and time-to-fix</td></tr>
+<tr><td>Commit or PR</td><td>URL</td><td>The only link back to code that is needed</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>What the spreadsheet view does</h4>
+<ul>
+<li>Inline editing with full keyboard navigation — tab, enter, arrows, fill-down, multi-row select. It should feel like a spreadsheet, not a web form.</li>
+<li>Sort, filter and group by any field. Group by repo for a release check, by device for a hardware pattern, by status for triage.</li>
+<li>Saved views for the questions you ask repeatedly: open bugs on one repo, crashes on one device, fixed and awaiting verification.</li>
+<li>A board view of the same rows grouped by status for triage, and a calendar by date found.</li>
+<li>CSV import and export that round-trips, because the data probably starts in a spreadsheet and should be able to go back to one.</li>
+</ul>
+
+<h4>What a spreadsheet cannot do</h4>
+<ul>
+<li>Every row opens as a complete note: reproduction steps, pasted screenshots with ink annotation on top, attached logs, a recording.</li>
+<li>Filing a bug from the phone captures device model, OS version and app build automatically.</li>
+<li>Status history comes from the edit log, so time-in-status and time-to-fix need no extra tooling.</li>
+<li>Share one view by link, read-only or with comments, with revocation — a tester can file and comment without an account in your code host.</li>
+<li>Every row is a markdown file with frontmatter, so the whole tracker is greppable, diffable and yours.</li>
+</ul>
+
+<div class="pick">
+<span class="f-alt">Deliberately out of scope</span>
+<p>Two-way synchronisation with GitHub, GitLab or Jira issues. It is the obvious next ask and it is a plugin, not core — the capability model in section 15 exists so that someone can build it without the tracker itself growing a dependency on anyone's API. A one-way export of selected rows to issues is a reasonable phase 5 addition.</p>
+</div>
+</section>
+
+
+<section id="canvas">
+<h2>14 · Canvas, ink and diagrams</h2>
+<p class="sec-note">One engine serves the infinite whiteboard, the OneNote-style freeform page, and the drawing embedded in a markdown note. Different bounds, same scene graph.</p>
+
+<h3>Rendering</h3>
+<ul>
+  <li>Scene graph split into spatial tiles; only visible tiles rasterise. Boards of tens of thousands of objects stay at 60 frames per second.</li>
+  <li>An ink layer separate from the scene, drawn with the shortest possible path from pointer event to pixel, with motion prediction to hide the remaining latency.</li>
+  <li>Strokes captured with pressure, tilt and velocity, stored as compressed point arrays, fitted to curves on completion.</li>
+  <li>Palm rejection driven by pointer type and contact geometry; an explicit pen-only mode for tablets.</li>
+  <li>Shape recognition on a slow-drawn stroke, snapping, alignment guides, and connectors that stay attached when a shape moves.</li>
+</ul>
+
+<h3>Diagrams that stay yours</h3>
+<ul>
+  <li>Mermaid blocks are text in the markdown file, rendered live. Edit as code or through a small form.</li>
+  <li>Drawings read and write the <code>.excalidraw</code> format, so the same file opens in Excalidraw. Import is not a one-way conversion.</li>
+  <li>Cards on a canvas are transclusions: the card shows a real note, and editing either place edits the same thing.</li>
+  <li>Export a board or a page to SVG, PNG or PDF, with vector text preserved.</li>
+</ul>
+
+<div class="warn">
+<span class="f-alt">Performance budget</span>
+<p>Pen down to first ink under 30&nbsp;ms on a mid-range Android tablet. Board pan and zoom at 60&nbsp;fps with 10,000 objects. A board opens in under 800&nbsp;ms cold. These are release-blocking numbers measured in continuous integration on real hardware, not aspirations.</p>
+</div>
+</section>
+
+<section id="plugins">
+<h2>15 · Plugins and themes</h2>
+<p class="sec-note">The reason Obsidian is sticky. Also the fastest way to lose control of security and performance, so the capability model comes before the first plugin ships.</p>
+<ul>
+  <li><strong>Two runtimes.</strong> Compute plugins are WebAssembly components with a typed host interface — safe, fast, and identical on every platform. Interface plugins run in a sandboxed frame talking over a message port, which is what lets existing web-based tools be ported.</li>
+  <li><strong>Capabilities are declared and shown.</strong> A manifest requests exactly what it needs: read notes matching a query, write to a folder, reach named network hosts, add a view. The install screen lists them in plain language. Nothing gets ambient access.</li>
+  <li><strong>The vault is off by default</strong> and requires a separate, explicit grant per plugin, with a visible indicator while it is in use.</li>
+  <li><strong>Budgets.</strong> Plugins get time and memory limits; one that stalls is suspended with a notice naming it, rather than freezing the app.</li>
+  <li><strong>Themes</strong> are CSS variables plus optional layout slots — no code, no permissions.</li>
+  <li><strong>Distribution</strong> through a reviewed registry with signed releases, plus sideloading for anyone who wants it.</li>
+</ul>
+<p class="hint">A compatibility shim for another product's plugin API is explicitly not promised. Instead, phase 4 ships a porting guide and pays a small bounty for the twenty most-wanted community plugins.</p>
+</section>
+
+<section id="backend">
+<h2>16 · Backend and infrastructure</h2>
+<div class="grid2">
+<div class="sheet"><h4>Services</h4>
+<ul style="margin-bottom:0">
+<li>Identity: accounts, passkeys, sessions, devices</li>
+<li>Sync relay: document logs, presence, fan-out</li>
+<li>Blobs: content-addressed, presigned uploads</li>
+<li>Push: FCM, APNs, Web Push</li>
+<li>Sharing: public links, permissions, revocation</li>
+<li>Billing, admin, abuse handling</li>
+</ul>
+</div>
+<div class="sheet"><h4>Foundations</h4>
+<ul style="margin-bottom:0">
+<li>Rust services, one repository, one deploy pipeline</li>
+<li>Postgres for metadata; Redis for presence and rate limits</li>
+<li>S3-compatible object storage with versioning</li>
+<li>OpenTelemetry traces, metrics, structured logs</li>
+<li>Infrastructure as code; staging mirrors production</li>
+<li>Backups tested by restoring weekly, not by hoping</li>
+</ul>
+</div>
+</div>
+<p><strong>Service objectives:</strong> relay availability 99.9%; an update accepted and fanned out at the 95th percentile in under 400&nbsp;ms within a region; zero tolerance for a lost acknowledged update, alerted on directly. <strong>Self-hosting</strong> is a first-class target from phase 2 — a compose file, one binary, documented upgrade path — because it is a large part of why this audience distrusts cloud note apps.</p>
+</section>
+
+<section id="platforms">
+<h2>17 · Platform matrix</h2>
+<p class="sec-note">Linux and Windows lead, because that is where the early users and the fastest iteration are. Apple platforms are deliberately last and deliberately budgeted, not squeezed in.</p>
+<div class="scroller">
+<table>
+<thead><tr><th>Capability</th><th>Linux</th><th>Windows</th><th>Android</th><th>Web</th><th>macOS</th><th>iOS</th></tr></thead>
+<tbody>
+<tr><td>Markdown editor and files</td><td><span class="tag t-yes">Ph 1</span></td><td><span class="tag t-yes">Ph 1</span></td><td><span class="tag t-yes">Ph 2</span></td><td><span class="tag t-yes">Ph 4</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-later">Ph 5</span></td></tr>
+<tr><td>Sync and accounts</td><td><span class="tag t-yes">Ph 2</span></td><td><span class="tag t-yes">Ph 2</span></td><td><span class="tag t-yes">Ph 2</span></td><td><span class="tag t-yes">Ph 4</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-later">Ph 5</span></td></tr>
+<tr><td>Quick capture and stickies</td><td><span class="tag t-yes">Ph 2</span></td><td><span class="tag t-yes">Ph 2</span></td><td><span class="tag t-yes">Ph 2</span></td><td><span class="tag t-no">Partial</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-later">Ph 5</span></td></tr>
+<tr><td>Collections and views</td><td><span class="tag t-yes">Ph 3</span></td><td><span class="tag t-yes">Ph 3</span></td><td><span class="tag t-yes">Ph 3</span></td><td><span class="tag t-yes">Ph 4</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-later">Ph 5</span></td></tr>
+<tr><td>Canvas and ink</td><td><span class="tag t-yes">Ph 3</span></td><td><span class="tag t-yes">Ph 3</span></td><td><span class="tag t-yes">Ph 3</span></td><td><span class="tag t-yes">Ph 4</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-later">Ph 5</span></td></tr>
+<tr><td>Vault</td><td><span class="tag t-yes">Ph 4</span></td><td><span class="tag t-yes">Ph 4</span></td><td><span class="tag t-yes">Ph 4</span></td><td><span class="tag t-no">Read-only</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-later">Ph 5</span></td></tr>
+<tr><td>Plugins</td><td><span class="tag t-yes">Ph 4</span></td><td><span class="tag t-yes">Ph 4</span></td><td><span class="tag t-no">Compute only</span></td><td><span class="tag t-yes">Ph 4</span></td><td><span class="tag t-later">Ph 5</span></td><td><span class="tag t-no">Compute only</span></td></tr>
+</tbody>
+</table>
+</div>
+<p class="hint">Web keeps the vault read-only in 1.0: holding vault keys in a browser is a materially weaker security story, and shipping it as equal would be a false promise.</p>
+</section>
+
+<section id="migration">
+<h2>18 · Migrating your data in</h2>
+<p class="sec-note">Nobody moves to a note app they have to retype into. Import is not a nice-to-have at the end — it is the reason a switch happens at all. Two of the three main sources have a usable API; the third does not, and that shapes the whole approach.</p>
+
+<div class="scroller">
+<table>
+<thead><tr><th>Source</th><th>Route</th><th>Comes over</th><th>Does not</th><th>Effort</th><th>Phase</th></tr></thead>
+<tbody>
+<tr><td>Obsidian</td><td>Point at the folder</td><td>Everything — it is already the format</td><td>Plugin-specific syntax degrades to text</td><td>Days</td><td>1</td></tr>
+<tr><td>Google Keep</td><td><strong>Takeout archive.</strong> The Keep API is admin-only and Workspace-only, so it is not available on a personal account</td><td>Note text, checklists, labels, colours, pins, timestamps, attachments — each note ships as both JSON and HTML plus its media</td><td>Reminders and collaborator links are thin; drawings arrive as images</td><td>~1 week</td><td>2</td></tr>
+<tr><td>Notion</td><td><strong>Official REST API</strong> over OAuth, using the markdown endpoint where possible and the block API for the rest</td><td>Pages, block tree, database schemas and rows, properties, relations, files</td><td>Synced blocks, linked views, link previews and some embeds return as unsupported placeholders</td><td>~3 weeks</td><td>4</td></tr>
+<tr><td>OneNote</td><td><strong>Microsoft Graph</strong> — notebooks, sections, pages, page content as HTML</td><td>Hierarchy maps almost directly onto folders; text, tables, images, attachments; ink when requested with the InkML flag</td><td>Pages built from InkNote elements are not supported by the export API at all, and Graph will not render a page to PDF or image for you</td><td>~3–4 weeks</td><td>4</td></tr>
+<tr><td>Evernote</td><td><code>.enex</code> export file</td><td>Notes, notebooks, tags, attachments, created and updated dates</td><td>Some formatting quirks in old notes</td><td>~1 week</td><td>4</td></tr>
+<tr><td>Excalidraw</td><td>Native — the format is already read and written</td><td>Everything</td><td>—</td><td>None</td><td>3</td></tr>
+<tr><td>Apple Notes, Miro</td><td>No practical public route for a bulk personal export</td><td>Local export and paste for Apple Notes; board-by-board for Miro</td><td>Treat as post-1.0</td><td>—</td><td>Later</td></tr>
+</tbody>
+</table>
+</div>
+<p class="hint">API behaviour verified against vendor documentation in September 2026. The OneNote ink path is the least stable of these and should be prototyped in phase 0 alongside the pen latency spike, since it decides whether handwritten notebooks can move at all.</p>
+
+<h3>Files first, APIs second</h3>
+<p>The default importer for every source is a file the user already has or can request in a few clicks. File import works offline, needs no OAuth screen, survives no rate limit, and does not depend on a vendor keeping an endpoint alive. API connectors are the convenience layer added in phase 4 on top of the same converters.</p>
+
+<h3>Rules every importer follows</h3>
+<ul>
+<li><strong>Nothing is overwritten.</strong> An import lands in a dated folder of its own. Merging into existing notes is a separate, explicit action afterwards.</li>
+<li><strong>Originals are kept verbatim.</strong> The source JSON, HTML or ENEX is stored beside the converted markdown in <code>_original/</code>. Conversion is lossy; the evidence should not be.</li>
+<li><strong>A fidelity report, always.</strong> At the end the user gets a plain list of what did not convert cleanly, each line linking to the note and the original. No silent degradation.</li>
+<li><strong>Resumable and idempotent.</strong> A large Notion workspace at three requests per second is an hours-long crawl that will fail partway. Checkpoint after every page, re-run safely, never duplicate.</li>
+<li><strong>Attachments are downloaded during the crawl</strong>, not linked. Notion's file URLs are signed and expire in about an hour, and Graph's behave similarly — a link stored today is dead tomorrow.</li>
+<li><strong>Backoff is a feature.</strong> Respect <code>Retry-After</code>, expect throttling from Graph on long exports, and show honest progress rather than a spinner.</li>
+<li><strong>A frozen test corpus.</strong> A few hundred real exported notes covering the awkward cases live in continuous integration, and every importer change is diffed against expected output.</li>
+</ul>
+
+<div class="warn">
+<span class="f-alt">The one that will hurt</span>
+<p>Handwriting. Keep drawings arrive as flat images, OneNote ink is partially exportable at best, and neither gives you the pressure and tilt data that makes ink feel alive in the canvas. Imported handwriting will be a picture of a note, not an editable stroke set. Say so in the import screen rather than letting people discover it later.</p>
+</div>
+</section>
+
+
+<section id="plan">
+<h2>19 · Project plan</h2>
+<p class="sec-note">Six phases over eighteen months to a public 1.0. Each phase ends with something a real person uses on a real device, and an exit test that can fail. A phase that misses its exit test extends; the next phase does not start on top of a broken foundation.</p>
+
+<h3>Workstreams</h3>
+<div class="scroller">
+<table>
+<thead><tr><th>Workstream</th><th>Owns</th><th>Peak size</th></tr></thead>
+<tbody>
+<tr><td>Core engine</td><td>Block store, CRDT, file bridge, index, crypto, plugin host</td><td>2–3</td></tr>
+<tr><td>Editor &amp; canvas</td><td>Block editor, markdown round-trip, canvas renderer, ink, diagrams</td><td>2–3</td></tr>
+<tr><td>Platform shells</td><td>Desktop, Android, iOS, web, widgets, sticky windows, capture</td><td>2</td></tr>
+<tr><td>Backend &amp; infra</td><td>Identity, relay, blobs, push, sharing, self-host, observability</td><td>1–2</td></tr>
+<tr><td>Design &amp; research</td><td>Design system, flows, usability testing, docs, copy</td><td>1</td></tr>
+<tr><td>QA &amp; release</td><td>Test harness, chaos sync tests, store submissions, importers</td><td>1</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="phase p0">
+<h3>Phase 0 — Prove the substrate</h3>
+<p class="when">Months 1–2 · milestone M0</p>
+<h4>Build</h4>
+<ul>
+<li>File format specification: markdown extensions, frontmatter rules, canvas JSON, block identifiers.</li>
+<li>Spike: CRDT library comparison on a 50,000-word document and a 10,000-object board — memory, merge time, update size.</li>
+<li>Spike: pen latency inside a Tauri WebView on a mid-range Android tablet, measured with a high-speed camera.</li>
+<li>Spike: markdown round-trip fidelity across 5,000 real notes exported from Obsidian and Notion.</li>
+<li>Monorepo, continuous integration on all target platforms, design system foundations.</li>
+</ul>
+<div class="exit"><strong>Exit test:</strong> a document survives 1,000 randomised concurrent edits from three simulated devices with byte-identical convergence and no markdown drift; measured pen latency is recorded and a decision on the ink surface is written down.</div>
+</div>
+
+<div class="phase p1">
+<h3>Phase 1 — A note app you would actually use, on one machine</h3>
+<p class="when">Months 3–5 · milestone M1 · internal alpha</p>
+<h4>Build</h4>
+<ul>
+<li>Block editor with markdown, tasks, code, images, links and backlinks.</li>
+<li>Local store, file watcher, SQLite index, instant search, command bar.</li>
+<li>Desktop shell for Linux and Windows with a folder picker and multi-window support.</li>
+<li>Board view with colored cards, in-app pinning, checklists.</li>
+</ul>
+<div class="exit"><strong>Exit test:</strong> the whole team moves their daily notes into it and does not move back. Cold start under one second on a five-year-old laptop.</div>
+</div>
+
+<div class="phase p2">
+<h3>Phase 2 — It is on your phone, and it is the same notes</h3>
+<p class="when">Months 5–8 · milestone M2 · closed alpha, roughly 100 users</p>
+<h4>Build</h4>
+<ul>
+<li>Identity service, passkeys, devices, sessions. Account-level encryption.</li>
+<li>Sync relay, update log, snapshots, presence, resumable attachment transfer, LAN peer sync.</li>
+<li>Android app with widget, quick-settings tile, share target and notification capture.</li>
+<li>Desktop quick-capture hotkey and always-on-top sticky windows.</li>
+<li>Self-hosting compose file and documentation.</li>
+</ul>
+<div class="exit"><strong>Exit test:</strong> a week-long chaos run — devices going offline mid-edit, clocks skewed, files edited by an external editor — ends with zero lost acknowledged updates and zero corrupted files. Capture to typed text under 400&nbsp;ms.</div>
+</div>
+
+<div class="phase p3">
+<h3>Phase 3 — Structure and the canvas</h3>
+<p class="when">Months 8–12 · milestone M3 · closed beta, roughly 1,000 users</p>
+<h4>Build</h4>
+<ul>
+<li>Collection schemas, typed properties, relations, rollups, a basic formula set, the repair queue.</li>
+<li>Table, board, calendar, gallery and list views with saved filters and sorts.</li>
+<li>Infinite canvas: shapes, connectors, frames, note cards as transclusions.</li>
+<li>Ink with pressure and tilt, palm rejection, shape recognition; OneNote-style freeform pages.</li>
+<li>Mermaid blocks and Excalidraw-compatible drawings; SVG and PDF export.</li>
+<li>Android stylus tuning on real tablets.</li>
+</ul>
+<div class="exit"><strong>Exit test:</strong> the performance budget is met on reference hardware, and beta users can move a Notion database and an Obsidian vault in and keep working without touching the old apps for two weeks.</div>
+</div>
+
+<div class="phase p4">
+<h3>Phase 4 — Vault, plugins, and the browser</h3>
+<p class="when">Months 12–16 · milestone M4 · open beta</p>
+<h4>Build</h4>
+<ul>
+<li>Vault: passphrase, per-document keys, biometric unlock, auto-lock, recovery phrase, local encrypted index.</li>
+<li>External security review and a published threat model.</li>
+<li>Plugin runtime, capability manifests, budgets, signed registry, porting guide and bounties.</li>
+<li>Web client on the WASM core, with the vault read-only.</li>
+<li>Sharing by link with permissions and revocation; importers for Keep, Notion, Obsidian, OneNote and Evernote.</li>
+</ul>
+<div class="exit"><strong>Exit test:</strong> the security review closes with no unresolved high-severity findings, and ten third-party plugins run without a crash or a permission escape.</div>
+</div>
+
+<div class="phase p5">
+<h3>Phase 5 — Apple platforms and 1.0</h3>
+<p class="when">Months 15–18 · milestone M5 · public launch</p>
+<h4>Build</h4>
+<ul>
+<li>macOS shell with menu bar capture, notarisation, and desktop stickies.</li>
+<li>iOS and iPadOS app with widgets, share extension and Apple Pencil support.</li>
+<li>App Store and Play Store submissions, with review lead time budgeted twice.</li>
+<li>Accessibility audit, localisation of the first five languages, documentation, pricing and billing.</li>
+<li>Performance and stability hardening; on-call rotation and incident runbooks.</li>
+</ul>
+<div class="exit"><strong>Exit test:</strong> crash-free sessions above 99.5% across all platforms for three consecutive weeks, and every 1.0 quality number met on reference hardware.</div>
+</div>
+</section>
+
+<section id="timeline">
+<h2>20 · Timeline</h2>
+<p class="sec-note">Eighteen months from a start in October 2026. Bars are colored by phase; a workstream that appears in several phases has several bars. Milestone markers sit on the bottom row.</p>
+<div class="legend">
+  <span><i style="background:#6b7d8a"></i>Phase 0 · substrate</span>
+  <span><i style="background:#1f6f68"></i>Phase 1 · local alpha</span>
+  <span><i style="background:#e9a73c"></i>Phase 2 · sync and mobile</span>
+  <span><i style="background:#54488c"></i>Phase 3 · structure and canvas</span>
+  <span><i style="background:#a8503f"></i>Phase 4 · vault, plugins, web</span>
+  <span><i style="background:#2c6ea8"></i>Phase 5 · Apple and 1.0</span>
+  <span><i style="background:#aebcc6"></i>continuous</span>
+</div>
+
+<div class="scroller"><div class="gantt">
+<div class="g-corner"></div>
+<div class="g-m yr" style="grid-column:2">Oct '26</div>
+<div class="g-m" style="grid-column:3">Nov</div>
+<div class="g-m" style="grid-column:4">Dec</div>
+<div class="g-m yr" style="grid-column:5">Jan '27</div>
+<div class="g-m" style="grid-column:6">Feb</div>
+<div class="g-m" style="grid-column:7">Mar</div>
+<div class="g-m" style="grid-column:8">Apr</div>
+<div class="g-m" style="grid-column:9">May</div>
+<div class="g-m" style="grid-column:10">Jun</div>
+<div class="g-m" style="grid-column:11">Jul</div>
+<div class="g-m" style="grid-column:12">Aug</div>
+<div class="g-m" style="grid-column:13">Sep</div>
+<div class="g-m" style="grid-column:14">Oct</div>
+<div class="g-m" style="grid-column:15">Nov</div>
+<div class="g-m" style="grid-column:16">Dec</div>
+<div class="g-m yr" style="grid-column:17">Jan '28</div>
+<div class="g-m" style="grid-column:18">Feb</div>
+<div class="g-m" style="grid-column:19">Mar</div>
+<div class="g-lab" style="grid-row:2">Discovery &amp; spikes</div>
+<div class="g-cell" style="grid-row:2;grid-column:2"></div>
+<div class="g-cell" style="grid-row:2;grid-column:3"></div>
+<div class="g-cell" style="grid-row:2;grid-column:4"></div>
+<div class="g-cell" style="grid-row:2;grid-column:5"></div>
+<div class="g-cell" style="grid-row:2;grid-column:6"></div>
+<div class="g-cell" style="grid-row:2;grid-column:7"></div>
+<div class="g-cell" style="grid-row:2;grid-column:8"></div>
+<div class="g-cell" style="grid-row:2;grid-column:9"></div>
+<div class="g-cell" style="grid-row:2;grid-column:10"></div>
+<div class="g-cell" style="grid-row:2;grid-column:11"></div>
+<div class="g-cell" style="grid-row:2;grid-column:12"></div>
+<div class="g-cell" style="grid-row:2;grid-column:13"></div>
+<div class="g-cell" style="grid-row:2;grid-column:14"></div>
+<div class="g-cell" style="grid-row:2;grid-column:15"></div>
+<div class="g-cell" style="grid-row:2;grid-column:16"></div>
+<div class="g-cell" style="grid-row:2;grid-column:17"></div>
+<div class="g-cell" style="grid-row:2;grid-column:18"></div>
+<div class="g-cell" style="grid-row:2;grid-column:19"></div>
+<div class="g-bar" style="grid-row:2;grid-column:2/4;background:#6b7d8a">Spikes, format spec</div>
+<div class="g-lab" style="grid-row:3">Core engine</div>
+<div class="g-cell" style="grid-row:3;grid-column:2"></div>
+<div class="g-cell" style="grid-row:3;grid-column:3"></div>
+<div class="g-cell" style="grid-row:3;grid-column:4"></div>
+<div class="g-cell" style="grid-row:3;grid-column:5"></div>
+<div class="g-cell" style="grid-row:3;grid-column:6"></div>
+<div class="g-cell" style="grid-row:3;grid-column:7"></div>
+<div class="g-cell" style="grid-row:3;grid-column:8"></div>
+<div class="g-cell" style="grid-row:3;grid-column:9"></div>
+<div class="g-cell" style="grid-row:3;grid-column:10"></div>
+<div class="g-cell" style="grid-row:3;grid-column:11"></div>
+<div class="g-cell" style="grid-row:3;grid-column:12"></div>
+<div class="g-cell" style="grid-row:3;grid-column:13"></div>
+<div class="g-cell" style="grid-row:3;grid-column:14"></div>
+<div class="g-cell" style="grid-row:3;grid-column:15"></div>
+<div class="g-cell" style="grid-row:3;grid-column:16"></div>
+<div class="g-cell" style="grid-row:3;grid-column:17"></div>
+<div class="g-cell" style="grid-row:3;grid-column:18"></div>
+<div class="g-cell" style="grid-row:3;grid-column:19"></div>
+<div class="g-bar" style="grid-row:3;grid-column:3/7;background:#1f6f68">Block store, index</div>
+<div class="g-bar on-light" style="grid-row:3;grid-column:6/10;background:#e9a73c">CRDT sync, file bridge</div>
+<div class="g-bar" style="grid-row:3;grid-column:17/19;background:#2c6ea8">Hardening</div>
+<div class="g-lab" style="grid-row:4">Editor &amp; markdown</div>
+<div class="g-cell" style="grid-row:4;grid-column:2"></div>
+<div class="g-cell" style="grid-row:4;grid-column:3"></div>
+<div class="g-cell" style="grid-row:4;grid-column:4"></div>
+<div class="g-cell" style="grid-row:4;grid-column:5"></div>
+<div class="g-cell" style="grid-row:4;grid-column:6"></div>
+<div class="g-cell" style="grid-row:4;grid-column:7"></div>
+<div class="g-cell" style="grid-row:4;grid-column:8"></div>
+<div class="g-cell" style="grid-row:4;grid-column:9"></div>
+<div class="g-cell" style="grid-row:4;grid-column:10"></div>
+<div class="g-cell" style="grid-row:4;grid-column:11"></div>
+<div class="g-cell" style="grid-row:4;grid-column:12"></div>
+<div class="g-cell" style="grid-row:4;grid-column:13"></div>
+<div class="g-cell" style="grid-row:4;grid-column:14"></div>
+<div class="g-cell" style="grid-row:4;grid-column:15"></div>
+<div class="g-cell" style="grid-row:4;grid-column:16"></div>
+<div class="g-cell" style="grid-row:4;grid-column:17"></div>
+<div class="g-cell" style="grid-row:4;grid-column:18"></div>
+<div class="g-cell" style="grid-row:4;grid-column:19"></div>
+<div class="g-bar" style="grid-row:4;grid-column:4/8;background:#1f6f68">Block editor</div>
+<div class="g-bar" style="grid-row:4;grid-column:9/12;background:#54488c">Tables, embeds, transclusion</div>
+<div class="g-lab" style="grid-row:5">Desktop shell</div>
+<div class="g-cell" style="grid-row:5;grid-column:2"></div>
+<div class="g-cell" style="grid-row:5;grid-column:3"></div>
+<div class="g-cell" style="grid-row:5;grid-column:4"></div>
+<div class="g-cell" style="grid-row:5;grid-column:5"></div>
+<div class="g-cell" style="grid-row:5;grid-column:6"></div>
+<div class="g-cell" style="grid-row:5;grid-column:7"></div>
+<div class="g-cell" style="grid-row:5;grid-column:8"></div>
+<div class="g-cell" style="grid-row:5;grid-column:9"></div>
+<div class="g-cell" style="grid-row:5;grid-column:10"></div>
+<div class="g-cell" style="grid-row:5;grid-column:11"></div>
+<div class="g-cell" style="grid-row:5;grid-column:12"></div>
+<div class="g-cell" style="grid-row:5;grid-column:13"></div>
+<div class="g-cell" style="grid-row:5;grid-column:14"></div>
+<div class="g-cell" style="grid-row:5;grid-column:15"></div>
+<div class="g-cell" style="grid-row:5;grid-column:16"></div>
+<div class="g-cell" style="grid-row:5;grid-column:17"></div>
+<div class="g-cell" style="grid-row:5;grid-column:18"></div>
+<div class="g-cell" style="grid-row:5;grid-column:19"></div>
+<div class="g-bar" style="grid-row:5;grid-column:4/7;background:#1f6f68">Linux + Windows</div>
+<div class="g-bar on-light" style="grid-row:5;grid-column:7/10;background:#e9a73c">Capture, stickies</div>
+<div class="g-bar" style="grid-row:5;grid-column:18/20;background:#2c6ea8">Polish</div>
+<div class="g-lab" style="grid-row:6">Android shell</div>
+<div class="g-cell" style="grid-row:6;grid-column:2"></div>
+<div class="g-cell" style="grid-row:6;grid-column:3"></div>
+<div class="g-cell" style="grid-row:6;grid-column:4"></div>
+<div class="g-cell" style="grid-row:6;grid-column:5"></div>
+<div class="g-cell" style="grid-row:6;grid-column:6"></div>
+<div class="g-cell" style="grid-row:6;grid-column:7"></div>
+<div class="g-cell" style="grid-row:6;grid-column:8"></div>
+<div class="g-cell" style="grid-row:6;grid-column:9"></div>
+<div class="g-cell" style="grid-row:6;grid-column:10"></div>
+<div class="g-cell" style="grid-row:6;grid-column:11"></div>
+<div class="g-cell" style="grid-row:6;grid-column:12"></div>
+<div class="g-cell" style="grid-row:6;grid-column:13"></div>
+<div class="g-cell" style="grid-row:6;grid-column:14"></div>
+<div class="g-cell" style="grid-row:6;grid-column:15"></div>
+<div class="g-cell" style="grid-row:6;grid-column:16"></div>
+<div class="g-cell" style="grid-row:6;grid-column:17"></div>
+<div class="g-cell" style="grid-row:6;grid-column:18"></div>
+<div class="g-cell" style="grid-row:6;grid-column:19"></div>
+<div class="g-bar on-light" style="grid-row:6;grid-column:7/11;background:#e9a73c">App, widgets, tile</div>
+<div class="g-bar" style="grid-row:6;grid-column:13/15;background:#54488c">Stylus</div>
+<div class="g-lab" style="grid-row:7">Collections &amp; views</div>
+<div class="g-cell" style="grid-row:7;grid-column:2"></div>
+<div class="g-cell" style="grid-row:7;grid-column:3"></div>
+<div class="g-cell" style="grid-row:7;grid-column:4"></div>
+<div class="g-cell" style="grid-row:7;grid-column:5"></div>
+<div class="g-cell" style="grid-row:7;grid-column:6"></div>
+<div class="g-cell" style="grid-row:7;grid-column:7"></div>
+<div class="g-cell" style="grid-row:7;grid-column:8"></div>
+<div class="g-cell" style="grid-row:7;grid-column:9"></div>
+<div class="g-cell" style="grid-row:7;grid-column:10"></div>
+<div class="g-cell" style="grid-row:7;grid-column:11"></div>
+<div class="g-cell" style="grid-row:7;grid-column:12"></div>
+<div class="g-cell" style="grid-row:7;grid-column:13"></div>
+<div class="g-cell" style="grid-row:7;grid-column:14"></div>
+<div class="g-cell" style="grid-row:7;grid-column:15"></div>
+<div class="g-cell" style="grid-row:7;grid-column:16"></div>
+<div class="g-cell" style="grid-row:7;grid-column:17"></div>
+<div class="g-cell" style="grid-row:7;grid-column:18"></div>
+<div class="g-cell" style="grid-row:7;grid-column:19"></div>
+<div class="g-bar" style="grid-row:7;grid-column:10/14;background:#54488c">Schemas, table, board, calendar</div>
+<div class="g-lab" style="grid-row:8">Canvas &amp; ink</div>
+<div class="g-cell" style="grid-row:8;grid-column:2"></div>
+<div class="g-cell" style="grid-row:8;grid-column:3"></div>
+<div class="g-cell" style="grid-row:8;grid-column:4"></div>
+<div class="g-cell" style="grid-row:8;grid-column:5"></div>
+<div class="g-cell" style="grid-row:8;grid-column:6"></div>
+<div class="g-cell" style="grid-row:8;grid-column:7"></div>
+<div class="g-cell" style="grid-row:8;grid-column:8"></div>
+<div class="g-cell" style="grid-row:8;grid-column:9"></div>
+<div class="g-cell" style="grid-row:8;grid-column:10"></div>
+<div class="g-cell" style="grid-row:8;grid-column:11"></div>
+<div class="g-cell" style="grid-row:8;grid-column:12"></div>
+<div class="g-cell" style="grid-row:8;grid-column:13"></div>
+<div class="g-cell" style="grid-row:8;grid-column:14"></div>
+<div class="g-cell" style="grid-row:8;grid-column:15"></div>
+<div class="g-cell" style="grid-row:8;grid-column:16"></div>
+<div class="g-cell" style="grid-row:8;grid-column:17"></div>
+<div class="g-cell" style="grid-row:8;grid-column:18"></div>
+<div class="g-cell" style="grid-row:8;grid-column:19"></div>
+<div class="g-bar" style="grid-row:8;grid-column:9/15;background:#54488c">Renderer, pen, Mermaid, Excalidraw</div>
+<div class="g-lab" style="grid-row:9">Vault &amp; security</div>
+<div class="g-cell" style="grid-row:9;grid-column:2"></div>
+<div class="g-cell" style="grid-row:9;grid-column:3"></div>
+<div class="g-cell" style="grid-row:9;grid-column:4"></div>
+<div class="g-cell" style="grid-row:9;grid-column:5"></div>
+<div class="g-cell" style="grid-row:9;grid-column:6"></div>
+<div class="g-cell" style="grid-row:9;grid-column:7"></div>
+<div class="g-cell" style="grid-row:9;grid-column:8"></div>
+<div class="g-cell" style="grid-row:9;grid-column:9"></div>
+<div class="g-cell" style="grid-row:9;grid-column:10"></div>
+<div class="g-cell" style="grid-row:9;grid-column:11"></div>
+<div class="g-cell" style="grid-row:9;grid-column:12"></div>
+<div class="g-cell" style="grid-row:9;grid-column:13"></div>
+<div class="g-cell" style="grid-row:9;grid-column:14"></div>
+<div class="g-cell" style="grid-row:9;grid-column:15"></div>
+<div class="g-cell" style="grid-row:9;grid-column:16"></div>
+<div class="g-cell" style="grid-row:9;grid-column:17"></div>
+<div class="g-cell" style="grid-row:9;grid-column:18"></div>
+<div class="g-cell" style="grid-row:9;grid-column:19"></div>
+<div class="g-bar on-light" style="grid-row:9;grid-column:6/8;background:#e9a73c">Crypto core</div>
+<div class="g-bar" style="grid-row:9;grid-column:13/17;background:#a8503f">Vault, audit</div>
+<div class="g-lab" style="grid-row:10">Plugins &amp; web</div>
+<div class="g-cell" style="grid-row:10;grid-column:2"></div>
+<div class="g-cell" style="grid-row:10;grid-column:3"></div>
+<div class="g-cell" style="grid-row:10;grid-column:4"></div>
+<div class="g-cell" style="grid-row:10;grid-column:5"></div>
+<div class="g-cell" style="grid-row:10;grid-column:6"></div>
+<div class="g-cell" style="grid-row:10;grid-column:7"></div>
+<div class="g-cell" style="grid-row:10;grid-column:8"></div>
+<div class="g-cell" style="grid-row:10;grid-column:9"></div>
+<div class="g-cell" style="grid-row:10;grid-column:10"></div>
+<div class="g-cell" style="grid-row:10;grid-column:11"></div>
+<div class="g-cell" style="grid-row:10;grid-column:12"></div>
+<div class="g-cell" style="grid-row:10;grid-column:13"></div>
+<div class="g-cell" style="grid-row:10;grid-column:14"></div>
+<div class="g-cell" style="grid-row:10;grid-column:15"></div>
+<div class="g-cell" style="grid-row:10;grid-column:16"></div>
+<div class="g-cell" style="grid-row:10;grid-column:17"></div>
+<div class="g-cell" style="grid-row:10;grid-column:18"></div>
+<div class="g-cell" style="grid-row:10;grid-column:19"></div>
+<div class="g-bar" style="grid-row:10;grid-column:13/18;background:#a8503f">Runtime, registry, PWA</div>
+<div class="g-lab" style="grid-row:11">Apple platforms</div>
+<div class="g-cell" style="grid-row:11;grid-column:2"></div>
+<div class="g-cell" style="grid-row:11;grid-column:3"></div>
+<div class="g-cell" style="grid-row:11;grid-column:4"></div>
+<div class="g-cell" style="grid-row:11;grid-column:5"></div>
+<div class="g-cell" style="grid-row:11;grid-column:6"></div>
+<div class="g-cell" style="grid-row:11;grid-column:7"></div>
+<div class="g-cell" style="grid-row:11;grid-column:8"></div>
+<div class="g-cell" style="grid-row:11;grid-column:9"></div>
+<div class="g-cell" style="grid-row:11;grid-column:10"></div>
+<div class="g-cell" style="grid-row:11;grid-column:11"></div>
+<div class="g-cell" style="grid-row:11;grid-column:12"></div>
+<div class="g-cell" style="grid-row:11;grid-column:13"></div>
+<div class="g-cell" style="grid-row:11;grid-column:14"></div>
+<div class="g-cell" style="grid-row:11;grid-column:15"></div>
+<div class="g-cell" style="grid-row:11;grid-column:16"></div>
+<div class="g-cell" style="grid-row:11;grid-column:17"></div>
+<div class="g-cell" style="grid-row:11;grid-column:18"></div>
+<div class="g-cell" style="grid-row:11;grid-column:19"></div>
+<div class="g-bar" style="grid-row:11;grid-column:16/20;background:#2c6ea8">macOS + iOS + review</div>
+<div class="g-lab" style="grid-row:12">Backend &amp; infra</div>
+<div class="g-cell" style="grid-row:12;grid-column:2"></div>
+<div class="g-cell" style="grid-row:12;grid-column:3"></div>
+<div class="g-cell" style="grid-row:12;grid-column:4"></div>
+<div class="g-cell" style="grid-row:12;grid-column:5"></div>
+<div class="g-cell" style="grid-row:12;grid-column:6"></div>
+<div class="g-cell" style="grid-row:12;grid-column:7"></div>
+<div class="g-cell" style="grid-row:12;grid-column:8"></div>
+<div class="g-cell" style="grid-row:12;grid-column:9"></div>
+<div class="g-cell" style="grid-row:12;grid-column:10"></div>
+<div class="g-cell" style="grid-row:12;grid-column:11"></div>
+<div class="g-cell" style="grid-row:12;grid-column:12"></div>
+<div class="g-cell" style="grid-row:12;grid-column:13"></div>
+<div class="g-cell" style="grid-row:12;grid-column:14"></div>
+<div class="g-cell" style="grid-row:12;grid-column:15"></div>
+<div class="g-cell" style="grid-row:12;grid-column:16"></div>
+<div class="g-cell" style="grid-row:12;grid-column:17"></div>
+<div class="g-cell" style="grid-row:12;grid-column:18"></div>
+<div class="g-cell" style="grid-row:12;grid-column:19"></div>
+<div class="g-bar on-light" style="grid-row:12;grid-column:5/10;background:#e9a73c">Identity, relay, blobs</div>
+<div class="g-bar" style="grid-row:12;grid-column:13/16;background:#a8503f">Sharing, self-host GA</div>
+<div class="g-bar" style="grid-row:12;grid-column:17/20;background:#2c6ea8">Scale, on-call</div>
+<div class="g-lab" style="grid-row:13">Design &amp; research</div>
+<div class="g-cell" style="grid-row:13;grid-column:2"></div>
+<div class="g-cell" style="grid-row:13;grid-column:3"></div>
+<div class="g-cell" style="grid-row:13;grid-column:4"></div>
+<div class="g-cell" style="grid-row:13;grid-column:5"></div>
+<div class="g-cell" style="grid-row:13;grid-column:6"></div>
+<div class="g-cell" style="grid-row:13;grid-column:7"></div>
+<div class="g-cell" style="grid-row:13;grid-column:8"></div>
+<div class="g-cell" style="grid-row:13;grid-column:9"></div>
+<div class="g-cell" style="grid-row:13;grid-column:10"></div>
+<div class="g-cell" style="grid-row:13;grid-column:11"></div>
+<div class="g-cell" style="grid-row:13;grid-column:12"></div>
+<div class="g-cell" style="grid-row:13;grid-column:13"></div>
+<div class="g-cell" style="grid-row:13;grid-column:14"></div>
+<div class="g-cell" style="grid-row:13;grid-column:15"></div>
+<div class="g-cell" style="grid-row:13;grid-column:16"></div>
+<div class="g-cell" style="grid-row:13;grid-column:17"></div>
+<div class="g-cell" style="grid-row:13;grid-column:18"></div>
+<div class="g-cell" style="grid-row:13;grid-column:19"></div>
+<div class="g-bar" style="grid-row:13;grid-column:2/5;background:#6b7d8a">System, flows</div>
+<div class="g-bar on-light" style="grid-row:13;grid-column:5/20;background:#aebcc6">Continuous design and user testing</div>
+<div class="g-lab" style="grid-row:14">QA &amp; release</div>
+<div class="g-cell" style="grid-row:14;grid-column:2"></div>
+<div class="g-cell" style="grid-row:14;grid-column:3"></div>
+<div class="g-cell" style="grid-row:14;grid-column:4"></div>
+<div class="g-cell" style="grid-row:14;grid-column:5"></div>
+<div class="g-cell" style="grid-row:14;grid-column:6"></div>
+<div class="g-cell" style="grid-row:14;grid-column:7"></div>
+<div class="g-cell" style="grid-row:14;grid-column:8"></div>
+<div class="g-cell" style="grid-row:14;grid-column:9"></div>
+<div class="g-cell" style="grid-row:14;grid-column:10"></div>
+<div class="g-cell" style="grid-row:14;grid-column:11"></div>
+<div class="g-cell" style="grid-row:14;grid-column:12"></div>
+<div class="g-cell" style="grid-row:14;grid-column:13"></div>
+<div class="g-cell" style="grid-row:14;grid-column:14"></div>
+<div class="g-cell" style="grid-row:14;grid-column:15"></div>
+<div class="g-cell" style="grid-row:14;grid-column:16"></div>
+<div class="g-cell" style="grid-row:14;grid-column:17"></div>
+<div class="g-cell" style="grid-row:14;grid-column:18"></div>
+<div class="g-cell" style="grid-row:14;grid-column:19"></div>
+<div class="g-bar" style="grid-row:14;grid-column:8/10;background:#1f6f68">Alpha</div>
+<div class="g-bar" style="grid-row:14;grid-column:12/14;background:#54488c">Closed beta</div>
+<div class="g-bar" style="grid-row:14;grid-column:15/18;background:#a8503f">Open beta, importers</div>
+<div class="g-bar" style="grid-row:14;grid-column:18/20;background:#2c6ea8">1.0 launch</div>
+<div class="g-milerow" style="grid-row:15">Milestones</div>
+<div class="g-cell" style="grid-row:15;grid-column:2;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:3;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:4;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:5;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:6;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:7;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:8;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:9;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:10;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:11;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:12;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:13;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:14;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:15;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:16;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:17;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:18;min-height:38px"></div>
+<div class="g-cell" style="grid-row:15;grid-column:19;min-height:38px"></div>
+<div class="g-dot" style="grid-row:15;grid-column:3/6">M0</div>
+<div class="g-dot" style="grid-row:15;grid-column:6/9">M1</div>
+<div class="g-dot" style="grid-row:15;grid-column:9/12">M2</div>
+<div class="g-dot" style="grid-row:15;grid-column:13/16">M3</div>
+<div class="g-dot" style="grid-row:15;grid-column:16/19">M4</div>
+<div class="g-dot" style="grid-row:15;grid-column:19/20">M5</div>
+</div></div>
+<p class="hint">Scroll the chart sideways on a narrow screen.</p>
+<div class="scroller">
+<table>
+<thead><tr><th>Milestone</th><th>When</th><th>What exists</th><th>Who is using it</th></tr></thead>
+<tbody>
+<tr><td>M0 · substrate proven</td><td>End of month 2</td><td>Format spec, CRDT and pen decisions made with numbers</td><td>Team only</td></tr>
+<tr><td>M1 · local alpha</td><td>End of month 5</td><td>Editor, files, search, desktop, board view</td><td>Team dogfooding daily</td></tr>
+<tr><td>M2 · sync alpha</td><td>End of month 8</td><td>Accounts, sync, Android, capture, stickies, self-host</td><td>~100 invited users</td></tr>
+<tr><td>M3 · structure beta</td><td>End of month 12</td><td>Collections, views, canvas, ink, diagrams</td><td>~1,000 beta users</td></tr>
+<tr><td>M4 · open beta</td><td>End of month 15</td><td>Vault, plugins, web, sharing, importers</td><td>Public waiting list</td></tr>
+<tr><td>M5 · 1.0</td><td>End of month 18</td><td>All six platforms, paid plans, support</td><td>General availability</td></tr>
+</tbody>
+</table>
+</div>
+<p>The schedule assumes a team reaching roughly eight people by month six and holding, statutory holidays taken, and no more than one week of unplanned work per month. It carries no explicit buffer inside phases; instead, phases 3 and 4 overlap by a month, and that overlap is the buffer that gets spent first when something slips.</p>
+</section>
+
+<section id="team">
+<h2>21 · Team and cost</h2>
+<div class="scroller">
+<table>
+<thead><tr><th>Role</th><th>Ph 0</th><th>Ph 1</th><th>Ph 2</th><th>Ph 3</th><th>Ph 4</th><th>Ph 5</th></tr></thead>
+<tbody>
+<tr><td>Core engineer (Rust, or TypeScript on path B)</td><td>2</td><td>2</td><td>3</td><td>3</td><td>3</td><td>2</td></tr>
+<tr><td>Client engineer (TypeScript)</td><td>1</td><td>2</td><td>2</td><td>3</td><td>3</td><td>3</td></tr>
+<tr><td>Platform engineer (mobile, desktop)</td><td>—</td><td>1</td><td>2</td><td>2</td><td>2</td><td>3</td></tr>
+<tr><td>Backend and infrastructure</td><td>—</td><td>1</td><td>2</td><td>1</td><td>2</td><td>1</td></tr>
+<tr><td>Design</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+<tr><td>QA and release</td><td>—</td><td>—</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+<tr><td><strong>Total</strong></td><td><strong>4</strong></td><td><strong>7</strong></td><td><strong>11</strong></td><td><strong>11</strong></td><td><strong>12</strong></td><td><strong>11</strong></td></tr>
+</tbody>
+</table>
+</div>
+<p>Roughly 150 person-months to 1.0. Non-salary costs are small by comparison: cloud infrastructure under a few hundred a month until the open beta, then scaling with storage; plus code signing certificates, developer program fees, a security review in phase 4, and reference hardware — a stylus tablet, a low-end Android phone, and an older laptop, all of which must sit on the desks of the people writing the performance-critical code.</p>
+<div class="pick"><span class="f-alt">If the team is much smaller</span>
+<p>At two or three people, this plan does not compress — it re-orders. Ship phases 0, 1 and 2 for Linux, Windows and Android only, cut the canvas to Excalidraw and Mermaid embedding without freehand ink, cut collections to frontmatter fields with a table view, and treat the vault as a folder-level encryption toggle. That is a real product in about ten months. Canvas ink and the plugin runtime are the two things that genuinely need a dedicated engineer each.</p>
+</div>
+</section>
+
+<section id="risks">
+<h2>22 · Risks</h2>
+<div class="scroller">
+<table>
+<thead><tr><th>Risk</th><th>Impact</th><th>Mitigation</th><th>Trigger to act</th></tr></thead>
+<tbody>
+<tr><td>Scope — this is five products in a trench coat</td><td>Severe</td><td>Phase exit tests, an explicit cut list, one non-negotiable per pillar rather than feature parity</td><td>Any phase overruns by three weeks</td></tr>
+<tr><td>Files and CRDTs as dual sources of change</td><td>Severe — data loss</td><td>Base-version three-way merge, timestamped copies before any external merge, continuous chaos testing</td><td>Any convergence failure in nightly tests</td></tr>
+<tr><td>Pen latency in a WebView</td><td>High — kills the tablet pillar</td><td>Measured in phase 0; fallback to a native composited ink surface scoped at three weeks</td><td>Latency above 40&nbsp;ms after prediction</td></tr>
+<tr><td>Tauri v2 mobile immaturity</td><td>High</td><td>Thin shell so the boundary can be swapped; native Android shell over the same core is the escape hatch</td><td>Two blocking upstream bugs without a workaround</td></tr>
+<tr><td>App Store review of a plugin runtime</td><td>Medium</td><td>Compute-only plugins on iOS, no downloadable executable code, precedent documented before submission</td><td>First rejection</td></tr>
+<tr><td>Encryption blocks the features people expect</td><td>Medium</td><td>Two explicit tiers, with the trade-off stated on screen rather than buried</td><td>Beta feedback on vault confusion</td></tr>
+<tr><td>Plugin ecosystem never starts</td><td>Medium</td><td>Ship ten first-party plugins on the same public interface, porting guide, bounties</td><td>Under five third-party plugins by M5</td></tr>
+<tr><td>Core language unfamiliar to the team</td><td>Medium</td><td>Path B in section 6 — a TypeScript core behind a narrow interface, with only the index, ink and merge modules ever candidates for a rewrite</td><td>Decided before phase 0 ends, not during phase 2</td></tr>
+<tr><td>Importers slip and nobody can switch</td><td>High — no switching, no users</td><td>File-based importers first, shipped as early as phase 2 for Keep and phase 1 for folders; API connectors are additive</td><td>Beta users still running the old app after a month</td></tr>
+<tr><td>Team burnout on an eighteen-month build</td><td>High</td><td>Something usable every phase, real users from month eight, no crunch as schedule policy</td><td>Two consecutive phases without a public release</td></tr>
+<tr><td>Incumbents ship the same combination</td><td>Medium</td><td>Compete on the thing they structurally cannot copy — plain files, local-first, self-hostable, no lock-in</td><td>Continuous</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="cut">
+<h2>23 · Cut from v1</h2>
+<p class="sec-note">Written down now so it does not get argued into the schedule in month ten. Everything here is a good idea and none of it is in 1.0.</p>
+<div class="grid2">
+<div class="sheet"><h4>Deferred</h4>
+<ul style="margin-bottom:0">
+<li>Real-time multiplayer editing with live cursors — sync converges in seconds, which is enough for one person on many devices</li>
+<li>Teams, roles and granular permissions</li>
+<li>Assistant features, semantic search, automatic linking</li>
+<li>Handwriting recognition and ink search</li>
+<li>Full spreadsheet-grade formulas</li>
+<li>Email-in, web clipper beyond a share target</li>
+<li>Mobile plugin interfaces beyond compute</li>
+</ul>
+</div>
+<div class="sheet"><h4>Not planned</h4>
+<ul style="margin-bottom:0">
+<li>Binary compatibility with another product's plugin API</li>
+<li>A proprietary sync-only format with no file export</li>
+<li>Server-side content processing for vault notes, ever</li>
+<li>Wiki-style public site publishing</li>
+<li>Windows on ARM as a first-class target at 1.0</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section id="quality">
+<h2>24 · Quality bar</h2>
+<p class="sec-note">Numbers that block a release, measured in continuous integration on reference hardware rather than on the fastest laptop in the room.</p>
+<div class="scroller">
+<table>
+<thead><tr><th>Measure</th><th>Target</th><th>Measured on</th></tr></thead>
+<tbody>
+<tr><td>Cold start to a usable window</td><td>Under 1.0&nbsp;s desktop, under 1.5&nbsp;s mobile</td><td>Five-year-old laptop, mid-range phone</td></tr>
+<tr><td>Hotkey to first typed character</td><td>Under 400&nbsp;ms</td><td>Same, from a cold session</td></tr>
+<tr><td>Keystroke to painted glyph</td><td>Under 16&nbsp;ms in a 50,000-word note</td><td>Reference laptop</td></tr>
+<tr><td>Pen down to first ink</td><td>Under 30&nbsp;ms</td><td>Mid-range Android tablet with stylus</td></tr>
+<tr><td>Sync convergence, both devices online</td><td>Under 2&nbsp;s at the 95th percentile</td><td>Cross-region test pair</td></tr>
+<tr><td>Search results for a 10,000-note vault</td><td>Under 120&nbsp;ms</td><td>Reference laptop</td></tr>
+<tr><td>Data recoverable from plain files alone</td><td>100%, verified nightly</td><td>Index wiped, app rebuilt, diff must be empty</td></tr>
+<tr><td>Crash-free sessions</td><td>Above 99.5%</td><td>All platforms, three-week rolling window</td></tr>
+<tr><td>Accessibility</td><td>Keyboard-complete, screen reader on core flows, WCAG AA contrast</td><td>Audited in phase 5</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Next three decisions</h3>
+<ol>
+<li>Confirm the eighteen-month, roughly eleven-person shape, or pick the smaller re-ordered plan in section 21 — everything downstream changes with that answer.</li>
+<li>Commit to files-as-source-of-truth. It costs real engineering in the file bridge and it is the whole reason this product is different.</li>
+<li>Start phase 0 spikes before anything else is designed. The CRDT choice and the pen latency number decide the architecture, and both can be known in eight weeks.</li>
+</ol>
+</section>
+
+<footer style="border-top:2px solid var(--ink);padding:18px 0 40px;font-family:Archivo;font-size:.8rem;color:var(--ink-faint);max-width:68ch">
+Mosaic is a working name. Dates assume a start in October 2026 and are planning estimates, not commitments. Sections 5, 7 and 8 hold the decisions that are expensive to reverse; everything else can move.
+</footer>
+</main>
+</div>
+</body>
+</html>

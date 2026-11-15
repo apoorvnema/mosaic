@@ -1,0 +1,7 @@
+{
+  "name": "@mosaic/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Sync relay, identity and blobs. Placeholder until the sync session (Prompt 4)."
+}
