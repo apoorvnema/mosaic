@@ -2,25 +2,9 @@ import { NotImplementedError } from '../errors';
 import type { CrdtDoc } from '../crdt/index';
 import type { VaultPath } from '../platform/filesystem';
 import type { Platform } from '../platform/index';
-import type { Block, NoteMeta } from '../store/types';
 
-export interface ParsedMarkdown {
-  meta: NoteMeta;
-  blocks: Block[];
-}
-
-/**
- * Markdown (CommonMark + frontmatter + the documented extension set) to the block
- * tree. Must retain enough of the source that `serializeMarkdown(parseMarkdown(s))`
- * returns `s` byte for byte when nothing was edited.
- */
-export function parseMarkdown(_source: string): ParsedMarkdown {
-  throw new NotImplementedError('filebridge.parseMarkdown');
-}
-
-export function serializeMarkdown(_parsed: ParsedMarkdown): string {
-  throw new NotImplementedError('filebridge.serializeMarkdown');
-}
+export { parseMarkdown, serializeMarkdown, type ParsedMarkdown } from './markdown';
+export * from './inline';
 
 export type ReconcileResult =
   | { kind: 'unchanged' }

@@ -11,9 +11,11 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json",
     "test": "vitest run",
-    "test:pending": "vitest run --config vitest.pending.config.ts"
+    "test:pending": "vitest run --config vitest.pending.config.ts",
+    "test:bench": "vitest run --config vitest.bench.config.ts"
   },
   "dependencies": {
+    "yaml": "^2.9.1",
     "yjs": "^13.6.33"
   },
   "devDependencies": {

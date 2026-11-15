@@ -23,12 +23,16 @@ before changing structure.
 ```
 packages/core/       pure TypeScript — no DOM, no React, no platform imports
   src/platform/      the adapter interfaces: Storage, FileSystem, Database, Crypto, Clock, Logger, Telemetry
-  src/<module>/      store, crdt, filebridge, indexer, search, schema, crypto, sync, plugins
+  src/<module>/      store, crdt, filebridge, indexer, search, schema, crypto, sync, plugins, vault
+  test/fixtures/     awkward markdown that must round-trip byte for byte (never reformat these)
+  test/bench/        performance budgets; synthetic 10,000-note corpus
   src/testing/       in-memory platform for headless tests (pure TS)
   test/contracts/    behaviour every adapter must satisfy; run by each adapter
   test/modules/      one spec per core module
 packages/adapters/   one folder per platform: node, web, tauri, extension, devserver, shared
 packages/ui/         React components and design tokens shared by every shell
+  src/editor/        the ProseMirror block editor (schema, block ↔ document conversion, commands)
+  src/app/           the workspace: note list, search, note pane, vault hooks
 apps/web/            Vite PWA — THE DEVELOPMENT SURFACE
 apps/desktop/        Tauri v2 (Linux, Windows, macOS)
 apps/mobile/         Tauri v2 mobile (Android first) + android-widgets/
@@ -53,6 +57,8 @@ There is no build step between packages; Vite, vitest and tsc consume the source
 | `pnpm test`         | all green unit tests (vitest, node, no browser)                                                                                                                    |
 | `pnpm test:core`    | core only, zero browser                                                                                                                                            |
 | `pnpm test:pending` | specs for unbuilt modules — **expected to fail**                                                                                                                   |
+| `pnpm test:bench`   | performance budgets; prints the numbers (search on 10,000 notes)                                                                                                   |
+| `pnpm corpus`       | write a synthetic vault to disk: `pnpm corpus /tmp/big 10000`                                                                                                      |
 | `pnpm test:e2e`     | Playwright against the web app, headless, on a fresh temp vault                                                                                                    |
 | `pnpm version:set`  | set the product version everywhere, e.g. `pnpm version:set 0.2.0`                                                                                                  |
 | `pnpm build`        | build every app                                                                                                                                                    |
@@ -140,6 +146,20 @@ header is illustration, not the product's look).
 `src/lib.rs` — Tauri's standard scaffold, registering the fs, sql and dialog
 plugins. No custom commands exist. Update this list if that ever changes.
 
+## How notes are read and written (do not break this)
+
+- `parseMarkdown` keeps every source line on exactly one block (`block.source.raw`
+  and `.trailing`). `serializeMarkdown` writes an unedited block from that source and
+  regenerates only a block whose fields changed. So `serialize(parse(s)) === s` for
+  any input, and an edit to one paragraph never reformats the rest of a file.
+- The editor document is a **flat** list of blocks; list nesting is an `indent`
+  attribute. `packages/ui/src/editor/convert.ts` maps it to the block tree and hands
+  back the original block object for every node that was not touched.
+- Markdown has no empty paragraph, so an empty one in the editor is never written.
+- The store tells its own writes from another program's by content, not timing alone.
+- The editor never touches files: it gets blocks in and calls `onChange` with blocks.
+- SQLite calls on the web adapter are serialised; never re-enter the connection.
+
 ## Decisions and status
 
 - ADRs: `docs/adr/`. Write one for every decision, including departures from the plan.
@@ -158,3 +178,15 @@ plugins. No custom commands exist. Update this list if that ever changes.
 - wa-sqlite: `@journeyapps/wa-sqlite` (maintained fork, FTS5 included) with
   `OPFSAnyContextVFS`, verified in Chromium by the Playwright suite.
 - `@playwright/test` is pinned to the version of the preinstalled browser (1.63.0).
+- FTS5 rows must share the note's rowid: deleting by an unindexed FTS column is a
+  full scan per note (it made a 10,000-note index build take 18 s instead of 3 s).
+- Browsers will not start a native drag from a `<button>`; the block drag handle is a div.
+- In Playwright, drag with stepped `mouse.move` calls; `dragTo` does not start the drag.
+  After a mouse click, wait ~80 ms before sending Enter: ProseMirror reads a
+  mouse-placed caret on a short timer and a script can out-type it.
+- `git commit` commits everything staged, including earlier `git rm --cached` and
+  `git mv`. When committing a small fix beside unfinished work, check `git status` first.
+- Tauri's fs scope wildcards skip dot-folders unless `plugins.fs.requireLiteralLeadingDot`
+  is false. The vault's `.mosaic/` folder needs that (found on a real Android phone).
+- Android only installs signed APKs. CI signs with the `ANDROID_KEYSTORE_*` secrets,
+  or a throwaway key when they are absent (see `.github/workflows/android.yml`).

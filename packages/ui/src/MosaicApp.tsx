@@ -1,12 +1,6 @@
 import type { Platform } from '@mosaic/core';
-import { useState } from 'react';
-import { AppShell, type Surface } from './components/AppShell';
-import { FoundationStatus } from './components/FoundationStatus';
-
-const COMING: Record<Exclude<Surface, 'board'>, string> = {
-  notebooks: 'Notebooks, sections and pages arrive with the Board in a later session.',
-  canvas: 'The infinite canvas and ink layer arrive in the canvas session.',
-};
+import { useVault } from './app/useVault';
+import { Workspace } from './app/Workspace';
 
 /**
  * The whole app, for every shell. A shell's only job is to build a Platform from
@@ -14,16 +8,11 @@ const COMING: Record<Exclude<Surface, 'board'>, string> = {
  * behind the Platform interface, not in a fork of this component.
  */
 export function MosaicApp({ platform }: { platform: Platform }) {
-  const [surface, setSurface] = useState<Surface>('board');
-  return (
-    <AppShell surface={surface} onSurfaceChange={setSurface} footer={<span>{platform.name}</span>}>
-      {surface === 'board' ? (
-        <FoundationStatus platform={platform} />
-      ) : (
-        <div className="m-card m-empty">{COMING[surface]}</div>
-      )}
-    </AppShell>
-  );
+  const { vault, error } = useVault(platform);
+  if (error) return <StartupError error={error} />;
+  // The index is local, so this is brief; render the frame rather than a spinner.
+  if (!vault) return <div className="m-shell" data-view="list" aria-busy="true" />;
+  return <Workspace vault={vault} />;
 }
 
 /** What a shell shows if its platform fails to start. Never a blank window. */

@@ -45,7 +45,7 @@ export default tseslint.config(
     plugins: { mosaic },
     rules: {
       // Pure packages core may use. Adding one needs an ADR.
-      'mosaic/no-platform-imports-in-core': ['error', { allow: ['yjs', 'lib0'] }],
+      'mosaic/no-platform-imports-in-core': ['error', { allow: ['yjs', 'lib0', 'yaml'] }],
       'no-restricted-globals': [
         'error',
         ...PLATFORM_GLOBALS.map((name) => ({
