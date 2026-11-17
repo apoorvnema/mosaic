@@ -55,7 +55,9 @@ interface MenuState {
   to: number;
   query: string;
   left: number;
+  /** Bottom and top of the line the caret is on, in viewport pixels. */
   top: number;
+  lineTop: number;
 }
 
 const SLASH_ITEMS: (MenuItem & { id: BlockChoice | 'image' })[] = [
@@ -92,6 +94,7 @@ function findTrigger(view: EditorView): MenuState | null {
     query: match[1] ?? '',
     left: coords.left,
     top: coords.bottom,
+    lineTop: coords.top,
   };
 }
 
@@ -452,7 +455,12 @@ export function Editor(props: EditorProps) {
           className="m-menu"
           role="listbox"
           aria-label={menu.kind === 'slash' ? 'Insert block' : 'Link to note'}
-          style={{ left: menu.left, top: menu.top + 6 }}
+          // Open below the line, or above it when there is not enough room underneath.
+          style={
+            menu.top + 320 > window.innerHeight && menu.lineTop > 320
+              ? { left: menu.left, bottom: window.innerHeight - menu.lineTop + 6 }
+              : { left: menu.left, top: menu.top + 6 }
+          }
         >
           {items.map((item, index) => (
             <div
